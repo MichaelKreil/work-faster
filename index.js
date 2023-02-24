@@ -2,15 +2,15 @@
 
 const os = require('os');
 
-Array.prototype.forEachParallel = forEachParallel;
+Array.prototype.forEachAsync = forEachAsync;
 
-function forEachParallel() {
+function forEachAsync() {
 	let callback, maxParallel = os.cpus().length;
 	switch (arguments.length) {
 		case 1: [callback] = arguments; break;
 		case 2: [callback, maxParallel] = arguments; break;
 		default:
-			throw Error('forEachParallel( callback, [ maxParallel ] )')
+			throw Error('forEachAsync( callback, [ maxParallel ] )')
 	}
 
 	let list = this;

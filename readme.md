@@ -1,9 +1,9 @@
-# Parallel Array
+# Async Stuff
 
 ## install
 
 ```bash
-npm install parallel-array
+npm install async-stuff
 ```
 
 ## usage
@@ -11,7 +11,7 @@ npm install parallel-array
 forEachParallel works in the same way as forEach, but asynchronously. Example:
 
 ```javascript
-	require('parallel-array');
+	require('async-stuff');
 
 	let list = [1,1,2,3,5];
 

@@ -11,12 +11,12 @@ async function test() {
 		item += 2;
 	})
 
-	await list.forEachParallel(async item => {
+	await list.forEachAsync(async item => {
 		item += 2;
 		await new Promise(res => setTimeout(res, 1));
 	})
 
-	await list.forEachParallel(async item => {
+	await list.forEachAsync(async item => {
 		item += 2;
 		await new Promise(res => setTimeout(res, 1));
 	}, 3)
