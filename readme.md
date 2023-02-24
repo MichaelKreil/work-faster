@@ -1,17 +1,17 @@
-# Async Stuff
+# Work Faster
 
 ## install
 
 ```bash
-npm install async-stuff
+npm install work-faster
 ```
 
 ## usage
 
-forEachParallel works in the same way as forEach, but asynchronously. Example:
+forEachAsync works in the same way as forEach, but asynchronously. Example:
 
 ```javascript
-	require('async-stuff');
+	require('work-faster');
 
 	let list = [1,1,2,3,5];
 
@@ -19,7 +19,7 @@ forEachParallel works in the same way as forEach, but asynchronously. Example:
 		doStuff(item)
 	})
 
-	await list.forEachParallel(async item => {
+	await list.forEachAsync(async item => {
 		await doStuffAsync(item)
 	})
 ```
@@ -27,5 +27,5 @@ forEachParallel works in the same way as forEach, but asynchronously. Example:
 This will run as many callbacks in parallel as there are CPU cores. You can set a different value for maxParallel an optional second parameter:
 
 ```javascript
-	await list.forEachParallel(doStuff, 4);
+	await list.forEachAsync(doStuff, 4);
 ```
