@@ -28,10 +28,10 @@ async function testForEach() {
 
 
 async function testStreamFileData() {
-	let stream = await streamFileData('https://storage.googleapis.com/datenhub-net-static/data/test.geojsonl.br');
+	let stream = await streamFileData('https://storage.googleapis.com/datenhub-net-static/data/test.geojsonl.br', { progress: true });
 	//let stream = await streamFileData('test.tsv.br');
 	//let stream = await streamFileData('https://storage.googleapis.com/datenhub-net-static/data/test.tsv.br');
 	for await (let line of stream) {
-		console.log(line);
+		//console.log(line);
 	}
 }
