@@ -11,5 +11,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/MichaelKreil/work-faster.git"
+  },
+  "dependencies": {
+    "papaparse": "^5.4.0"
   }
 }
