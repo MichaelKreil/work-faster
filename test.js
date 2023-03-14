@@ -28,9 +28,10 @@ async function testForEach() {
 
 
 async function testStreamFileData() {
-	let stream = await streamFileData('https://storage.googleapis.com/datenhub-net-static/data/test.geojsonl.br', { progress: true });
+	//let stream = await streamFileData('https://storage.googleapis.com/datenhub-net-static/data/test.geojsonl.br', { progress: true });
 	//let stream = await streamFileData('test.tsv.br');
 	//let stream = await streamFileData('https://storage.googleapis.com/datenhub-net-static/data/test.tsv.br');
+	let stream = await streamFileData('https://storage.googleapis.com/datenhub-net-static/data/p075_stadt_land_post/zensus_points.csv.br', { progress: true, fast: true });
 	for await (let line of stream) {
 		//console.log(line);
 	}

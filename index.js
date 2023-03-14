@@ -3,7 +3,7 @@
 const { createReadStream, statSync } = require('fs');
 const http = require('http');
 const https = require('https');
-const papaparse = require('papaparse');
+const papa = require('papaparse');
 const os = require('os');
 const { extname } = require('path');
 const { Transform, PassThrough } = require('stream');
@@ -97,7 +97,11 @@ async function streamFileData(filename, opt) {
 	}
 
 	if (/\.[ct]sv$/.test(filename)) {
-		return getCsvParser(stream);
+		if (opt.fast) {
+			return getCsvParserFast(stream);
+		} else {
+			return getCsvParser(stream);
+		}
 	} else if (/\.(geo)?json(l|seq)$/.test(filename)) {
 		return getJsonParser(stream);
 	} else {
@@ -136,8 +140,40 @@ async function streamFileData(filename, opt) {
 		}
 	}
 
+	function getCsvParserFast(stream) {
+		let header, separator;
+
+		stream = stream.pipe(getSplitter());
+		return stream.pipe(new Transform({
+			autoDestroy: true,
+			readableObjectMode: true,
+			transform: (line, enc, cb) => {
+				line = line.toString();
+				if (header) {
+					if (line.length < 1) return cb();
+					line = line.split(separator);
+					cb(null, Object.fromEntries(header.map((key, i) => [key, line[i]])));
+				} else {
+					separator = ',';
+					header = line.split(separator);
+
+					if (line.split(';').length > header.length) {
+						separator = ';';
+						header = line.split(separator);
+					}
+
+					if (line.split('\t').length > header.length) {
+						separator = '\t';
+						header = line.split(separator);
+					}
+					cb(null);
+				}
+			},
+		}))
+	}
+
 	function getCsvParser(stream) {
-		let parser = papaparse.parse(papaparse.NODE_STREAM_INPUT, { header: true });
+		let parser = papa.parse(papa.NODE_STREAM_INPUT, { header: true });
 		return stream.pipe(parser);
 	}
 
