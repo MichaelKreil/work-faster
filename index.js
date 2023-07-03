@@ -71,7 +71,7 @@ async function streamFileData(filename, opt) {
 	} else if (filename.startsWith('https://')) {
 		stream = await getHttpStream(https, filename)
 	} else {
-		size = statSync(filename);
+		size = statSync(filename).size;
 		stream = createReadStream(filename);
 	}
 	if (stream && stream.headers && stream.headers['content-length']) {
