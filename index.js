@@ -79,13 +79,14 @@ async function streamFileData(filename, opt) {
 	}
 
 	if (opt.progress && size) {
-		let progress = new Progress();
 		let pos = 0;
+		let progress = (typeof opt.progress === 'function') ? opt.progress : createProgressBar;
+		progress = progress(size);
 		stream.on('data', chunk => {
 			pos += chunk.length;
-			progress.update(pos / size);
+			progress.update(pos);
 		})
-		stream.on('close', () => progress.finish());
+		stream.on('close', () => progress.close());
 	}
 
 	if (filename.endsWith('.gz')) {
@@ -189,23 +190,75 @@ async function streamFileData(filename, opt) {
 	}
 }
 
-function Progress(prefix = '   ') {
-	let start = Date.now();
+export function createProgressBar(total, timeStep = 1000) {
+	const MAX_STATES = 30;
+	let index = 0;
+	let nextUpdateTime = Date.now();
+	const previousStates = [];
+	update(0);
 
-	return {
-		update,
-		finish,
+	return { update, close, increment };
+
+	function log() {
+		let time = Date.now();
+		const progress = 100 * index / total;
+		let message = `\r\x1b[K   ${index}/${total} - ${progress.toFixed(2)} %`;
+
+		const newState = { index, time };
+		const lastState = previousStates[previousStates.length - 1] || newState;
+		if ((lastState.index !== index) || (lastState === newState)) {
+			previousStates.unshift(newState);
+			while (previousStates.length > MAX_STATES) previousStates.pop();
+		}
+
+		if (lastState.index < index) {
+			const speed = 1000 * (index - lastState.index) / (time - lastState.time);
+			let speedString;
+			if (speed >= 1e6) {
+				speedString = (speed / 1000).toFixed(0) + ' K'
+			} else if (speed >= 1e5) {
+				speedString = (speed / 1000).toFixed(1) + ' K'
+			} else if (speed >= 1e4) {
+				speedString = (speed / 1000).toFixed(2) + ' K'
+			} else if (speed >= 1e3) {
+				speedString = speed.toFixed(0)
+			} else if (speed >= 1e2) {
+				speedString = speed.toFixed(1)
+			} else if (speed >= 1e1) {
+				speedString = speed.toFixed(2)
+			} else {
+				speedString = speed.toFixed(3)
+			}
+
+			const eta = (total - index) / speed;
+			const etaString = [
+				Math.floor(eta / 3600).toFixed(0),
+				(Math.floor(eta / 60) % 60 + 100).toFixed(0).slice(1),
+				(Math.floor(eta) % 60 + 100).toFixed(0).slice(1),
+			].join(':');
+
+			message += ` - ${speedString}/s - ${etaString}`;
+		}
+
+		process.stderr.write(message);
 	}
-	function update(progress) {
-		let eta = (Date.now() - start) * (1 - progress) / progress / 1000;
-		let hours = Math.floor(eta / 3600);
-		let minutes = Math.floor(eta / 60 - hours * 60);
-		let seconds = Math.floor(eta - minutes * 60 - hours * 3600);
-		eta = hours + ':' + ('00' + minutes).slice(-2) + ':' + ('00' + seconds).slice(-2);
-		process.stderr.write('\x1b[2K\r' + prefix + (100 * progress).toFixed(2) + '% - ' + eta);
+
+	function update(value) {
+		index = value;
+		if (Date.now() >= nextUpdateTime) {
+			log();
+			nextUpdateTime += timeStep;
+		}
 	}
-	function finish() {
-		process.stderr.write('\x1b[2K\r' + prefix + 'Finished\n');
+
+	function increment(value = 1) {
+		update(index + value);
+	}
+
+	function close() {
+		index = total;
+		log();
+		process.stderr.write(`\n`);
 	}
 }
 
