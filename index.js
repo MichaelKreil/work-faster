@@ -10,7 +10,9 @@ import { Transform } from 'node:stream';
 import { StringDecoder } from 'node:string_decoder';
 import { createGunzip, createBrotliDecompress } from 'node:zlib';
 
-export function forEachAsync() {
+Array.prototype.forEachAsync = forEachAsync;
+
+function forEachAsync() {
 	let callback, maxParallel = os.cpus().length;
 	switch (arguments.length) {
 		case 1: [callback] = arguments; break;

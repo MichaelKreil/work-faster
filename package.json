@@ -1,6 +1,6 @@
 {
   "name": "work-faster",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "same as array.forEach, but in parallel",
   "main": "index.js",
   "scripts": {
@@ -14,6 +14,6 @@
   },
   "type": "module",
   "dependencies": {
-    "papaparse": "^5.4.0"
+    "papaparse": "^5.4.1"
   }
 }
