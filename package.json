@@ -1,6 +1,6 @@
 {
   "name": "work-faster",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "same as array.forEach, but in parallel",
   "main": "index.js",
   "scripts": {
@@ -12,6 +12,7 @@
     "type": "git",
     "url": "https://github.com/MichaelKreil/work-faster.git"
   },
+  "type": "module",
   "dependencies": {
     "papaparse": "^5.4.0"
   }

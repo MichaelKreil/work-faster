@@ -1,22 +1,16 @@
 "use strict"
 
-const { createReadStream, statSync } = require('fs');
-const http = require('http');
-const https = require('https');
-const papa = require('papaparse');
-const os = require('os');
-const { extname } = require('path');
-const { Transform, PassThrough } = require('stream');
-const { StringDecoder } = require('string_decoder');
-const { createGunzip, createBrotliDecompress } = require('zlib');
+import { createReadStream, statSync } from 'node:fs';
+import http from 'node:http';
+import https from 'node:https';
+import papa from 'papaparse';
+import os from 'node:os';
+import { extname } from 'node:path';
+import { Transform } from 'node:stream';
+import { StringDecoder } from 'node:string_decoder';
+import { createGunzip, createBrotliDecompress } from 'node:zlib';
 
-module.exports = {
-	streamFileData,
-};
-
-Array.prototype.forEachAsync = forEachAsync;
-
-function forEachAsync() {
+export function forEachAsync() {
 	let callback, maxParallel = os.cpus().length;
 	switch (arguments.length) {
 		case 1: [callback] = arguments; break;
@@ -61,7 +55,7 @@ function forEachAsync() {
 	})
 }
 
-async function streamFileData(filename, opt) {
+export async function streamFileData(filename, opt) {
 	if (!opt) opt = {};
 
 	let stream, size;
