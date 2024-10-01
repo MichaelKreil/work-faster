@@ -1,27 +1,16 @@
-"use strict"
-
 import { createReadStream, statSync } from 'node:fs';
 import http from 'node:http';
 import https from 'node:https';
 import papa from 'papaparse';
 import os from 'node:os';
 import { extname } from 'node:path';
-import { Transform } from 'node:stream';
+import { Readable, Transform } from 'node:stream';
 import { StringDecoder } from 'node:string_decoder';
 import { createGunzip, createBrotliDecompress } from 'node:zlib';
 
-Array.prototype.forEachAsync = forEachAsync;
+export function forEachAsync<V>(list: V[], callback: (item: V, index: number) => Promise<void>, maxParallel = 0): Promise<void> {
+	if (maxParallel === 0) maxParallel = os.cpus().length;
 
-function forEachAsync() {
-	let callback, maxParallel = os.cpus().length;
-	switch (arguments.length) {
-		case 1: [callback] = arguments; break;
-		case 2: [callback, maxParallel] = arguments; break;
-		default:
-			throw Error('forEachAsync( callback, [ maxParallel ] )')
-	}
-
-	let list = this;
 	return new Promise((resolve, reject) => {
 		let running = 0, index = 0, finished = false;
 
@@ -57,10 +46,10 @@ function forEachAsync() {
 	})
 }
 
-export async function streamFileData(filename, opt) {
+export async function streamFileData(filename: string, opt: { progress?: true, fast?: true }) {
 	if (!opt) opt = {};
 
-	let stream, size;
+	let stream: Readable, size: number = 0;
 
 	if (filename.startsWith('http://')) {
 		stream = await getHttpStream(http, filename)
@@ -70,15 +59,15 @@ export async function streamFileData(filename, opt) {
 		size = statSync(filename).size;
 		stream = createReadStream(filename);
 	}
-	if (stream && stream.headers && stream.headers['content-length']) {
+
+	if ('headers' in stream && typeof stream.headers == 'object' && stream.headers != null && stream.headers['content-length']) {
 		size = parseInt(stream.headers['content-length'], 10);
 	}
 
 	if (opt.progress && size) {
 		let pos = 0;
-		let progress = (typeof opt.progress === 'function') ? opt.progress : createProgressBar;
-		progress = progress(size);
-		stream.on('data', chunk => {
+		let progress = new ProgressBar(size);
+		stream.on('data', (chunk: Buffer) => {
 			pos += chunk.length;
 			progress.update(pos);
 		})
@@ -105,13 +94,13 @@ export async function streamFileData(filename, opt) {
 		throw new Error('Unknown file extension: ' + extname(filename));
 	}
 
-	function getHttpStream(lib, url) {
-		return new Promise(res => {
+	function getHttpStream(lib: typeof http | typeof https, url: string): Promise<http.IncomingMessage> {
+		return new Promise<http.IncomingMessage>(res => {
 			lib.request(url, stream => res(stream)).end();
 		})
 	}
 
-	function getSplitter(matcher = /\r?\n/, format = 'utf8') {
+	function getSplitter(matcher = /\r?\n/, format: BufferEncoding = 'utf8') {
 		let last = '';
 		let decoder = new StringDecoder(format);
 
@@ -186,22 +175,31 @@ export async function streamFileData(filename, opt) {
 	}
 }
 
-export function createProgressBar(total, timeStep = 1000) {
-	const MAX_STATES = 30;
-	let index = 0;
-	let nextUpdateTime = Date.now();
-	const previousStates = [];
-	update(0);
+type ProgressState = { index: number, time: number };
 
-	return { update, close, increment };
+export class ProgressBar {
+	private readonly MAX_STATES = 30;
+	private index = 0;
+	private nextUpdateTime: number;
+	private readonly total: number;
+	private readonly timeStep: number;
+	private readonly previousStates: ProgressState[] = [];
 
-	function log() {
+	constructor(total: number, timeStep = 1000) {
+		this.total = total;
+		this.timeStep = timeStep;
+		this.nextUpdateTime = Date.now();
+		this.update(0);
+	}
+
+	private log() {
+		const { index, total, previousStates, MAX_STATES } = this;
 		let time = Date.now();
 		const progress = 100 * index / total;
 		let message = `\r\x1b[K   ${index}/${total} - ${progress.toFixed(2)} %`;
 
-		const newState = { index, time };
-		const lastState = previousStates[previousStates.length - 1] || newState;
+		const newState: ProgressState = { index, time };
+		const lastState: ProgressState = previousStates[previousStates.length - 1] || newState;
 		if ((lastState.index !== index) || (lastState === newState)) {
 			previousStates.unshift(newState);
 			while (previousStates.length > MAX_STATES) previousStates.pop();
@@ -239,21 +237,21 @@ export function createProgressBar(total, timeStep = 1000) {
 		process.stderr.write(message);
 	}
 
-	function update(value) {
-		index = value;
-		if (Date.now() >= nextUpdateTime) {
-			log();
-			nextUpdateTime += timeStep;
+	public update(value: number) {
+		this.index = value;
+		if (Date.now() >= this.nextUpdateTime) {
+			this.log();
+			this.nextUpdateTime += this.timeStep;
 		}
 	}
 
-	function increment(value = 1) {
-		update(index + value);
+	public increment(value = 1) {
+		this.update(this.index + value);
 	}
 
-	function close() {
-		index = total;
-		log();
+	public close() {
+		this.index = this.total;
+		this.log();
 		process.stderr.write(`\n`);
 	}
 }
