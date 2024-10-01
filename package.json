@@ -10,7 +10,7 @@
     "release": "npx vrt release-npm",
     "test-coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "upgrade": "npm-check-updates -u && rm -f package-lock.json; rm -rf node_modules; npm i && npm update"
+    "upgrade": "npm-check-updates -u && rm -f package-lock.json; rm -rf node_modules; npm i"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
