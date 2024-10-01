@@ -2,10 +2,22 @@
   "name": "work-faster",
   "version": "0.3.4",
   "description": "same as array.forEach, but in parallel",
-  "main": "index.js",
   "scripts": {
-    "test": "node test.js"
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "check": "npm run lint && npm run build && npm run test",
+    "lint": "eslint . --color",
+    "prepack": "npm run build",
+    "release": "npx vrt release-npm",
+    "test-coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "upgrade": "npm-check-updates -u && rm -f package-lock.json; rm -rf node_modules; npm i && npm update"
   },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts"
+  ],
   "author": "Michael Kreil <github@michael-kreil.de> (https://github.com/MichaelKreil)",
   "license": "MIT",
   "repository": {
@@ -17,6 +29,19 @@
     "papaparse": "^5.4.1"
   },
   "devDependencies": {
-    "@types/papaparse": "^5.3.14"
+    "@types/jest": "^29.5.13",
+    "@types/node": "^22.7.4",
+    "@types/papaparse": "^5.3.14",
+    "@typescript-eslint/eslint-plugin": "^8.8.0",
+    "@typescript-eslint/parser": "^8.8.0",
+    "@versatiles/release-tool": "^1.2.6",
+    "eslint": "^9.11.1",
+    "jest": "^29.7.0",
+    "npm-check-updates": "^17.1.3",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2",
+    "typescript-eslint": "^8.8.0"
   }
 }

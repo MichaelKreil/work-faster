@@ -29,7 +29,7 @@ export function forEachAsync<V>(list: V[], callback: (item: V, index: number) =>
 			}
 
 			running++;
-			let currentIndex = index++;
+			const currentIndex = index++;
 
 			callback(list[currentIndex], currentIndex)
 				.then(() => {
@@ -60,13 +60,16 @@ export async function streamFileData(filename: string, opt: { progress?: true, f
 		stream = createReadStream(filename);
 	}
 
-	if ('headers' in stream && typeof stream.headers == 'object' && stream.headers != null && stream.headers['content-length']) {
-		size = parseInt(stream.headers['content-length'], 10);
+	if ('headers' in stream && typeof stream.headers == 'object' && stream.headers != null) {
+		const { headers } = stream;
+		if ('content-length' in headers && typeof headers['content-length'] == 'string') {
+			size = parseInt(headers['content-length'], 10);
+		}
 	}
 
 	if (opt.progress && size) {
 		let pos = 0;
-		let progress = new ProgressBar(size);
+		const progress = new ProgressBar(size);
 		stream.on('data', (chunk: Buffer) => {
 			pos += chunk.length;
 			progress.update(pos);
@@ -102,32 +105,28 @@ export async function streamFileData(filename: string, opt: { progress?: true, f
 
 	function getSplitter(matcher = /\r?\n/, format: BufferEncoding = 'utf8') {
 		let last = '';
-		let decoder = new StringDecoder(format);
+		const decoder = new StringDecoder(format);
 
 		return new Transform({
 			autoDestroy: true,
 			readableObjectMode: true,
-			transform,
-			flush,
+			transform: function (chunk: string, enc: BufferEncoding, cb: () => void) {
+				last += decoder.write(chunk);
+				const lines = last.split(matcher);
+				const lastIndex = lines.length - 1;
+				for (let i = 0; i < lastIndex; i++) this.push(lines[i])
+				last = lines[lastIndex];
+				cb();
+			},
+			flush: function (cb: () => void) {
+				this.push(last);
+				cb();
+			}
 		})
-
-		function transform(chunk, enc, cb) {
-			last += decoder.write(chunk);
-			let lines = last.split(matcher);
-			let lastIndex = lines.length - 1;
-			for (let i = 0; i < lastIndex; i++) this.push(lines[i])
-			last = lines[lastIndex];
-			cb();
-		}
-
-		function flush(cb) {
-			this.push(last);
-			cb();
-		}
 	}
 
-	function getCsvParserFast(stream) {
-		let header, separator;
+	function getCsvParserFast(stream: Readable) {
+		let header: string[], separator: string;
 
 		stream = stream.pipe(getSplitter());
 		return stream.pipe(new Transform({
@@ -158,12 +157,12 @@ export async function streamFileData(filename: string, opt: { progress?: true, f
 		}))
 	}
 
-	function getCsvParser(stream) {
-		let parser = papa.parse(papa.NODE_STREAM_INPUT, { header: true });
+	function getCsvParser(stream: Readable) {
+		const parser = papa.parse(papa.NODE_STREAM_INPUT, { header: true });
 		return stream.pipe(parser);
 	}
 
-	function getJsonParser(stream) {
+	function getJsonParser(stream: Readable) {
 		stream = stream.pipe(getSplitter());
 		return stream.pipe(new Transform({
 			autoDestroy: true,
@@ -194,7 +193,7 @@ export class ProgressBar {
 
 	private log() {
 		const { index, total, previousStates, MAX_STATES } = this;
-		let time = Date.now();
+		const time = Date.now();
 		const progress = 100 * index / total;
 		let message = `\r\x1b[K   ${index}/${total} - ${progress.toFixed(2)} %`;
 
