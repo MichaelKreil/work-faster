@@ -1,9 +1,10 @@
 
 export { forEachAsync } from './lib/for_each_async.js';
 export { ProgressBar } from './lib/progress_bar.js';
-export { streamFileData } from './lib/stream_file_data.js';
 
-import { getSplitter } from './lib/split.js';
+import { split } from './lib/stream/split.js';
+import { streamFileData } from './lib/stream/stream_file_data.js';
 export const stream = {
-	split: getSplitter,
+	split,
+	streamFileData,
 }
