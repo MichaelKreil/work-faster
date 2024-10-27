@@ -1,7 +1,7 @@
 import { Transform } from 'node:stream';
 import { StringDecoder } from 'node:string_decoder';
 
-export function getSplitter(matcher: string | RegExp = /\r?\n/, format: BufferEncoding = 'utf8'): Transform {
+export function split(matcher: string | RegExp = /\r?\n/, format: BufferEncoding = 'utf8'): Transform {
 	let last = '';
 	const decoder = new StringDecoder(format);
 
