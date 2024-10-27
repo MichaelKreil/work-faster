@@ -4,13 +4,16 @@ import https from 'node:https';
 import papa from 'papaparse';
 import { extname } from 'node:path';
 import { Readable, Transform } from 'node:stream';
-import { StringDecoder } from 'node:string_decoder';
 import { createGunzip, createBrotliDecompress } from 'node:zlib';
 import { ProgressBar } from './progress_bar.js';
+import { getSplitter } from './split.js';
 
 
 
-export async function streamFileData(filename: string, opt: { progress?: true, fast?: true }): Promise<Readable> {
+export async function streamFileData(
+	filename: string,
+	opt: { progress?: true, fast?: true }
+): Promise<Readable> {
 	if (!opt) opt = {};
 
 	let stream: Readable, size: number = 0;
@@ -66,28 +69,6 @@ export async function streamFileData(filename: string, opt: { progress?: true, f
 function getHttpStream(lib: typeof http | typeof https, url: string): Promise<http.IncomingMessage> {
 	return new Promise<http.IncomingMessage>(res => {
 		lib.request(url, stream => res(stream)).end();
-	})
-}
-
-function getSplitter(matcher = /\r?\n/, format: BufferEncoding = 'utf8') {
-	let last = '';
-	const decoder = new StringDecoder(format);
-
-	return new Transform({
-		autoDestroy: true,
-		readableObjectMode: true,
-		transform: function (chunk: string, enc: BufferEncoding, cb: () => void) {
-			last += decoder.write(chunk);
-			const lines = last.split(matcher);
-			const lastIndex = lines.length - 1;
-			for (let i = 0; i < lastIndex; i++) this.push(lines[i])
-			last = lines[lastIndex];
-			cb();
-		},
-		flush: function (cb: () => void) {
-			this.push(last);
-			cb();
-		}
 	})
 }
 
