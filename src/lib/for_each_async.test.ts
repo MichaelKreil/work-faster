@@ -58,7 +58,6 @@ describe('forEachAsync', () => {
 		await expect(forEachAsync(list, callback)).resolves.toBeUndefined();
 	});
 
-
 	it('should process a list of numbers asynchronously', async () => {
 		const list = [1, 1, 2, 3, 5];
 
@@ -73,6 +72,63 @@ describe('forEachAsync', () => {
 		}, 3);
 
 		expect(list).toEqual([5, 5, 6, 7, 9]);
+	});
+
+	it('should process items from a synchronous generator', async () => {
+		function* syncGenerator() {
+			yield 1;
+			yield 2;
+			yield 3;
+		}
+
+		const callback = jest.fn(async () => { });
+		await forEachAsync(syncGenerator(), callback);
+
+		expect(callback).toHaveBeenCalledTimes(3);
+		expect(callback).toHaveBeenNthCalledWith(1, 1, 0);
+		expect(callback).toHaveBeenNthCalledWith(2, 2, 1);
+		expect(callback).toHaveBeenNthCalledWith(3, 3, 2);
+	});
+
+	it('should process items from an asynchronous generator', async () => {
+		async function* asyncGenerator() {
+			yield 1;
+			yield 2;
+			yield 3;
+		}
+
+		const callback = jest.fn(async () => { });
+		await forEachAsync(asyncGenerator(), callback);
+
+		expect(callback).toHaveBeenCalledTimes(3);
+		expect(callback).toHaveBeenNthCalledWith(1, 1, 0);
+		expect(callback).toHaveBeenNthCalledWith(2, 2, 1);
+		expect(callback).toHaveBeenNthCalledWith(3, 3, 2);
+	});
+
+	it('should process items from an iterator', async () => {
+		const iterator = [1, 2, 3][Symbol.iterator]();
+		const callback = jest.fn(async () => { });
+
+		await forEachAsync(iterator, callback);
+
+		expect(callback).toHaveBeenCalledTimes(3);
+		expect(callback).toHaveBeenNthCalledWith(1, 1, 0);
+		expect(callback).toHaveBeenNthCalledWith(2, 2, 1);
+		expect(callback).toHaveBeenNthCalledWith(3, 3, 2);
+	});
+
+	it('should handle errors from an asynchronous generator', async () => {
+		async function* asyncErrorGenerator() {
+			yield 1;
+			yield 2;
+			throw new Error('Generator error');
+		}
+
+		const callback = jest.fn(async () => { });
+
+		await expect(forEachAsync(asyncErrorGenerator(), callback)).rejects.toThrow('Generator error');
+		expect(callback).toHaveBeenCalledTimes(2); // Should only process up to the error
 	});
 });
 

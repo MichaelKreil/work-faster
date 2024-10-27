@@ -1,39 +1,61 @@
 import os from 'node:os';
 
-export function forEachAsync<V>(list: V[], callback: (item: V, index: number) => Promise<void>, maxParallel?: number): Promise<void> {
-	const concurrency = (maxParallel == null) ? os.cpus().length : maxParallel;
+export function forEachAsync<V>(
+	items: Iterable<V> | AsyncIterable<V> | Iterator<V> | AsyncIterator<V>,
+	callback: (item: V, index: number) => Promise<void>,
+	maxParallel?: number
+): Promise<void> {
+	const concurrency = maxParallel ?? os.cpus().length;
+	let index = 0;
+	let finished = false;
 
 	return new Promise((resolve, reject) => {
-		let running = 0, index = 0, finished = false;
+		let running = 0;
+		const iterator = getIterator(items);
 
-		queueMicrotask(next);
-
-		function next() {
+		async function next() {
 			if (finished) return;
 			if (running >= concurrency) return;
-			if (index >= list.length) {
-				if (running === 0) {
-					finished = true;
-					resolve();
-					return
+
+			try {
+				const { done, value } = await iterator.next();
+				if (done) {
+					if (running === 0) {
+						finished = true;
+						resolve();
+					}
+					return;
 				}
-				return
+
+				running++;
+				const currentIndex = index++;
+
+				callback(value as V, currentIndex)
+					.then(() => {
+						running--;
+						queueMicrotask(next);
+					})
+					.catch((err) => {
+						finished = true;
+						reject(err);
+					});
+
+				if (running < concurrency) queueMicrotask(next);
+			} catch (err) {
+				// If an error occurs in the iterator's next method
+				finished = true;
+				reject(err);
 			}
-
-			running++;
-			const currentIndex = index++;
-
-			callback(list[currentIndex], currentIndex)
-				.then(() => {
-					running--;
-					queueMicrotask(next)
-				})
-				.catch(err => {
-					finished = true;
-					reject(err);
-				})
-
-			if (running < concurrency) queueMicrotask(next);
 		}
-	})
+
+		queueMicrotask(next);
+	});
+}
+
+function getIterator<V>(
+	iterator: Iterable<V> | AsyncIterable<V> | Iterator<V> | AsyncIterator<V>
+): AsyncIterator<V> | Iterator<V> {
+	if (Symbol.asyncIterator in iterator) return iterator[Symbol.asyncIterator]()
+	if (Symbol.iterator in iterator) return iterator[Symbol.iterator]()
+	return iterator;
 }
