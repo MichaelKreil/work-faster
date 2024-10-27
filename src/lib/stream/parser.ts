@@ -2,16 +2,18 @@ import { Readable } from 'node:stream';
 import { asLines } from './split.js';
 import papa from 'papaparse';
 
+export type Format = 'csv' | 'csv_fast' | 'json';
+
 /**
  * Parses the stream content based on file type (CSV or JSON).
  */
-export function parser(type: 'csv' | 'csv_fast' | 'json', stream: Readable): AsyncGenerator<object> {
-	switch (type) {
+export function parser(format: Format, stream: Readable): AsyncGenerator<object> {
+	switch (format) {
 		case 'csv': return parseCSV(stream);
 		case 'csv_fast': return parseCSVFast(stream);
 		case 'json': return parseNDJSON(stream);
 	}
-	throw new Error(`Unknown type: ${type}`);
+	throw new Error(`Unknown format: ${format}`);
 }
 
 /**
