@@ -1,4 +1,4 @@
-import { Transform } from 'node:stream';
+import { type Readable, Transform } from 'node:stream';
 import { StringDecoder } from 'node:string_decoder';
 
 export function split(matcher: string | RegExp = /\r?\n/, format: BufferEncoding = 'utf8'): Transform {
@@ -21,4 +21,10 @@ export function split(matcher: string | RegExp = /\r?\n/, format: BufferEncoding
 			cb();
 		}
 	})
+}
+
+export async function* asLines(stream: Readable, matcher?: string | RegExp): AsyncGenerator<string> {
+	for await (const line of stream.pipe(split(matcher))) {
+		yield line;
+	}
 }
