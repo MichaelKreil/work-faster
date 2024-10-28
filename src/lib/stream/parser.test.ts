@@ -1,4 +1,3 @@
-// parser.test.ts
 import { fromString } from './utils.js';
 import { parser } from './parser.js';
 
