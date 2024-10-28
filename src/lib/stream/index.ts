@@ -1,5 +1,5 @@
 export { readDataFile } from './data_file.js';
-export { decompress } from './decompress.js';
+export { compress, decompress } from './compress.js';
 export { parser } from './parser.js';
 export { read } from './read.js';
 export { spawn } from './spawn.js';

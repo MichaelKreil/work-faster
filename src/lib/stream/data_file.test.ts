@@ -8,7 +8,7 @@ const parser = jest.fn();
 
 // Mock the necessary modules
 jest.unstable_mockModule('./read.js', () => ({ read }));
-jest.unstable_mockModule('./decompress.js', () => ({ decompress }));
+jest.unstable_mockModule('./compress.js', () => ({ decompress }));
 jest.unstable_mockModule('../progress_bar.js', () => ({ ProgressBar }));
 jest.unstable_mockModule('./parser.js', () => ({ parser }));
 

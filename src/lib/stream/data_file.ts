@@ -1,12 +1,12 @@
 import { ProgressBar } from '../progress_bar.js';
 import { read } from './read.js';
-import { Compression, decompress } from './decompress.js';
+import { Compression, decompress } from './compress.js';
 import { Format, parser } from './parser.js';
 import { asLines } from './split.js';
 
-export async function readDataFile(filename: string, compression: Compression | null, format: Format, progress?: true): Promise<AsyncGenerator<object>>
-export async function readDataFile(filename: string, compression: Compression | null, format: null, progress?: true): Promise<AsyncGenerator<string>>
-export async function readDataFile(filename: string, compression: Compression | null, format: Format | null, progress?: true): Promise<AsyncGenerator<object | string>> {
+export async function readDataFile(filename: string, compression: Compression | null, format: Format, progress?: boolean): Promise<AsyncGenerator<object>>
+export async function readDataFile(filename: string, compression: Compression | null, format: null, progress?: boolean): Promise<AsyncGenerator<string>>
+export async function readDataFile(filename: string, compression: Compression | null, format: Format | null, progress?: boolean): Promise<AsyncGenerator<object | string>> {
 	// Read the initial stream
 	// eslint-disable-next-line prefer-const
 	let { stream, size } = await read(filename);
