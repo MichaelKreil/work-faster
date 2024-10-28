@@ -1,8 +1,8 @@
-import { spawn } from 'node:child_process';
+import child_process from 'node:child_process';
 import { Transform } from 'node:stream';
 
-export function spawnProcessAsStream(command: string, args: string[]): Transform {
-	const cp = spawn(command, args, {
+export function spawn(command: string, args: string[]): Transform {
+	const cp = child_process.spawn(command, args, {
 		stdio: ['pipe', 'pipe', 'pipe'], // Redirect stderr to allow error handling
 	});
 

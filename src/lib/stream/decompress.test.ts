@@ -7,7 +7,7 @@ const spawn = jest.fn();
 
 // Mock node:zlib and node:child_process modules using jest.unstable_mockModule
 jest.unstable_mockModule('node:zlib', () => ({ createGunzip, createBrotliDecompress }));
-jest.unstable_mockModule('node:child_process', () => ({ spawn }));
+jest.unstable_mockModule('node:child_process', () => ({ default: { spawn } }));
 
 // Now dynamically import decompress after mocks are set up
 const { decompress } = await import('./decompress.js');
