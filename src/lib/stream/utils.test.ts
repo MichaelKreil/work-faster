@@ -1,53 +1,98 @@
-import { fromArray, toString, toBuffer, fromValue, toArray } from './utils.js';
+import { fromValue, fromArray, toString, toBuffer, toArray } from './utils.js';
+import { WFReadable } from './types.js';
 
-describe('Stream Utility Functions', () => {
+describe('Utils Module', () => {
+
 	describe('fromValue', () => {
-		it('should create a stream from a string', async () => {
-			const input = 'Hello, world!';
-			expect(await toArray(fromValue(input))).toEqual([input]);
+		it('should create a WFReadable from a single value', async () => {
+			const input = 'test value';
+			const readable = fromValue(input);
+			expect(readable).toBeInstanceOf(WFReadable);
+			expect(await toString(readable)).toBe(input);
 		});
-		
-		it('should create a stream from a buffer', async () => {
-			const input = Buffer.from('Hello, world!');
-			expect(await toArray(fromValue(input))).toEqual([input]);
+
+		it('should handle buffer inputs correctly', async () => {
+			const input = Buffer.from('buffer value');
+			const readable = fromValue(input);
+			expect(readable).toBeInstanceOf(WFReadable);
+			expect(await toBuffer(readable)).toEqual(input);
 		});
 	});
 
 	describe('fromArray', () => {
-		it('should create a stream from an array of strings', async () => {
-			const input = ['Hello, ', 'world!'];
-			expect(await toArray(fromArray(input))).toEqual(input);
+		it('should create a WFReadable from an array of strings', async () => {
+			const input = ['value1', 'value2', 'value3'];
+			const readable = fromArray(input);
+			expect(readable).toBeInstanceOf(WFReadable);
+			expect(await toArray(readable)).toEqual(input);
 		});
 
-		it('should create a stream from an array of buffers', async () => {
-			const input = [Buffer.from('Hello, '), Buffer.from('world!')];
-			expect(await toArray(fromArray(input))).toEqual(input);
+		it('should create a WFReadable from an array of buffers', async () => {
+			const input = [Buffer.from('buffer1'), Buffer.from('buffer2')];
+			const readable = fromArray(input);
+			expect(readable).toBeInstanceOf(WFReadable);
+			expect(await toArray(readable)).toEqual(input);
 		});
 	});
 
 	describe('toString', () => {
-		it('should collect data from a stream and return it as a string', async () => {
-			const input = 'Hello, world!';
-			expect(await toString(fromValue(input))).toEqual(input);
+		it('should convert a WFReadable stream to a string', async () => {
+			const input = 'stream to string';
+			const readable = fromValue(input);
+			expect(await toString(readable)).toBe(input);
+		});
+
+		it('should concatenate multiple chunks into a single string', async () => {
+			const input = ['chunk1', 'chunk2', 'chunk3'];
+			const readable = fromArray(input);
+			expect(await toString(readable)).toBe(input.join(''));
 		});
 	});
 
 	describe('toBuffer', () => {
-		it('should collect data from a stream and return it as a buffer', async () => {
-			const input = Buffer.from('Hello, world!');
-			expect(await toBuffer(fromValue(input))).toEqual(input);
+		it('should convert a WFReadable stream to a Buffer', async () => {
+			const input = 'convert to buffer';
+			const readable = fromValue(Buffer.from(input));
+			expect(await toBuffer(readable)).toEqual(Buffer.from(input));
+		});
+
+		it('should concatenate multiple buffer chunks into a single Buffer', async () => {
+			const input = [Buffer.from('part1'), Buffer.from('part2'), Buffer.from('part3')];
+			const readable = fromArray(input);
+			expect(await toBuffer(readable)).toEqual(Buffer.concat(input));
 		});
 	});
 
 	describe('toArray', () => {
-		it('should collect buffers', async () => {
-			const input = [Buffer.from('Hello, '), Buffer.from('world!')];
-			expect(await toArray(fromArray(input))).toEqual(input);
+		it('should convert a WFReadable stream to an array of chunks', async () => {
+			const input = ['array element1', 'array element2'];
+			const readable = fromArray(input);
+			expect(await toArray(readable)).toEqual(input);
 		});
-		
-		it('should collect strings', async () => {
-			const input = ['Hello, ', 'world!'];
+
+		it('should handle streams with mixed data types', async () => {
+			const input = [Buffer.from('buffer1'), 'string element', Buffer.from('buffer2')];
+			const readable = fromArray(input);
+			expect(await toArray(readable)).toEqual(input);
+		});
+	});
+
+	describe('Integration Tests', () => {
+		it('should correctly handle conversion between different utility functions', async () => {
+			const input = 'integration test data';
+			const readable = fromValue(input);
+
+			// Convert to buffer and back to string
+			expect((await toBuffer(readable)).toString()).toBe(input);
+
+			// Convert back to readable and to array
+			expect(await toArray(fromArray([input]))).toEqual([input]);
+		});
+
+		it('should correctly handle a large array of data', async () => {
+			const input = Array.from({ length: 1000 }, (_, i) => `data${i}`);
 			expect(await toArray(fromArray(input))).toEqual(input);
+			expect(await toString(fromArray(input))).toBe(input.join(''));
 		});
 	});
 });
