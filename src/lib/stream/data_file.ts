@@ -23,7 +23,7 @@ export async function readDataFile(filename: string, compression: Compression | 
 	}
 
 	// Decompress the stream if needed
-	if (compression != null) stream = stream.pipe(decompress(compression));
+	if (compression != null) stream = stream.merge(await decompress(compression));
 
 	if (format == null) return asLines(stream);
 

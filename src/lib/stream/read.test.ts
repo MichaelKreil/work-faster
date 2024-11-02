@@ -1,6 +1,7 @@
 import { jest } from '@jest/globals';
 import { IncomingMessage } from 'node:http';
 import { Readable } from 'node:stream';
+import { toString } from './utils.js';
 
 const createReadStream = jest.fn();
 const statSync = jest.fn();
@@ -22,15 +23,8 @@ describe('read', () => {
 
 	it('should return a file stream and size for a local file', async () => {
 		const mockSize = 1024;
-		const mockStream = new Readable({
-			read() {
-				this.push('file content');
-				this.push(null);
-			},
-		});
-
 		statSync.mockReturnValue({ size: mockSize });
-		createReadStream.mockReturnValue(mockStream);
+		createReadStream.mockReturnValue(Readable.from(['file content']));
 
 		const filename = 'testfile.txt';
 		const { stream, size } = await read(filename);
@@ -38,19 +32,12 @@ describe('read', () => {
 		expect(statSync).toHaveBeenCalledWith(filename);
 		expect(createReadStream).toHaveBeenCalledWith(filename);
 		expect(size).toBe(mockSize);
-
-		const result = await streamToString(stream);
-		expect(result).toBe('file content');
+		expect(await toString(stream)).toBe('file content');
 	});
 
 	it('should return an HTTP stream and content length for an HTTP URL', async () => {
 		const mockSize = 2048;
-		const mockStream = new Readable({
-			read() {
-				this.push('http content');
-				this.push(null);
-			},
-		}) as IncomingMessage;
+		const mockStream = Readable.from(['http content']) as IncomingMessage;
 		mockStream.headers = { 'content-length': mockSize.toString() };
 
 		httpRequest.mockImplementation((_url, cb) => {
@@ -63,19 +50,12 @@ describe('read', () => {
 
 		expect(httpRequest).toHaveBeenCalledWith(url, expect.any(Function));
 		expect(size).toBe(mockSize);
-
-		const result = await streamToString(stream);
-		expect(result).toBe('http content');
+		expect(await toString(stream)).toBe('http content');
 	});
 
 	it('should return an HTTPS stream and content length for an HTTPS URL', async () => {
 		const mockSize = 3072;
-		const mockStream = new Readable({
-			read() {
-				this.push('https content');
-				this.push(null);
-			},
-		}) as IncomingMessage;
+		const mockStream = Readable.from(['https content']) as IncomingMessage;
 		mockStream.headers = { 'content-length': mockSize.toString() };
 
 		httpsRequest.mockImplementation((_, cb) => {
@@ -88,17 +68,6 @@ describe('read', () => {
 
 		expect(httpsRequest).toHaveBeenCalledWith(url, expect.any(Function));
 		expect(size).toBe(mockSize);
-
-		const result = await streamToString(stream);
-		expect(result).toBe('https content');
+		expect(await toString(stream)).toBe('https content');
 	});
 });
-
-// Helper function to convert a stream to a string for testing purposes
-async function streamToString(stream: Readable): Promise<string> {
-	const chunks: Buffer[] = [];
-	for await (const chunk of stream) {
-		chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-	}
-	return Buffer.concat(chunks).toString('utf-8');
-}

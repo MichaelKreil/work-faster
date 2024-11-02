@@ -1,5 +1,5 @@
 import { Readable } from 'node:stream';
-import { WFReadable } from './types.js';
+import { WFReadable, WFTransform } from './types.js';
 
 export function fromValue<T>(input: T): WFReadable<T> {
 	return new WFReadable(Readable.from([input]));
@@ -19,7 +19,7 @@ export function fromArray<T>(input: T[]): WFReadable<T> {
  * @param stream A readable stream to collect data from.
  * @returns A promise that resolves with the stream data as a string.
  */
-export async function toString(stream: WFReadable<Buffer | string>): Promise<string> {
+export async function toString<I>(stream: WFReadable<Buffer | string> | WFTransform<I, Buffer | string>): Promise<string> {
 	return (await toBuffer(stream)).toString();
 }
 
@@ -28,7 +28,7 @@ export async function toString(stream: WFReadable<Buffer | string>): Promise<str
  * @param stream A readable stream to collect data from.
  * @returns A promise that resolves with the stream data as a Buffer.
  */
-export async function toBuffer(stream: WFReadable<Buffer | string>): Promise<Buffer> {
+export async function toBuffer<I>(stream: WFReadable<Buffer | string> | WFTransform<I, Buffer | string>): Promise<Buffer> {
 	const chunks: Buffer[] = [];
 	for await (const chunk of stream) chunks.push(Buffer.from(chunk));
 	return Buffer.concat(chunks);
@@ -39,8 +39,8 @@ export async function toBuffer(stream: WFReadable<Buffer | string>): Promise<Buf
  * @param stream A readable stream to collect data from.
  * @returns A promise that resolves with an array of the stream data chunks.
  */
-export async function toArray<T>(stream: WFReadable<T>): Promise<T[]> {
-	const chunks: T[] = [];
+export async function toArray<I, O>(stream: WFReadable<O> | WFTransform<I, O>): Promise<O[]> {
+	const chunks: O[] = [];
 	for await (const chunk of stream) chunks.push(chunk);
 	return chunks;
 }

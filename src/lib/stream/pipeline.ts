@@ -1,4 +1,4 @@
-import type { WFReadSource as R, WFTransformSource as T, WFWriteSource as W } from './types.js';
+import type { WFReadSource as R, WFTransformSource as T, WFWriteSource as W, WFReadable, WFTransform } from './types.js';
 import { wrapRead, wrapTransform, wrapWrite } from './types.js';
 
 export function pipeline<A>(r: R<A>, w: W<A>): Promise<void>;
@@ -13,7 +13,7 @@ export function pipeline<A, B, C, D, E, F, G, H, I>(r: R<A>, t1: T<A, B>, t2: T<
 export function pipeline(r: R, ...w: (T | W)[]): Promise<void>;
 
 export function pipeline(r: R, ...w: (T | W)[]): Promise<void> {
-	let stream = wrapRead(r);
+	let stream: WFReadable | WFTransform = wrapRead(r);
 	const write = wrapWrite(w.pop() as W);
 
 	for (const transform of w) {

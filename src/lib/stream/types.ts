@@ -47,7 +47,8 @@ export function wrapRead<O>(inner: WFReadSource<O>): WFReadable<O> {
 	throw Error('unknown readable');
 }
 
-export class WFReadable<O> {
+export class WFReadable<O = unknown> {
+	readonly type = 'Readable';
 	inner: Readable;
 	constructor(inner: Readable) {
 		this.inner = inner;
@@ -55,6 +56,7 @@ export class WFReadable<O> {
 
 	pipe<T>(destination: WFTransform<O, T>): WFTransform<O, T>;
 	pipe(destination: WFWritable<O>): WFWritable<O>;
+	pipe<T>(destination: WFWritable<O> | WFTransform<O, T>): WFWritable<O> | WFTransform<O, T>;
 	pipe<T>(destination: WFWritable<O> | WFTransform<O, T>): WFWritable<O> | WFTransform<O, T> {
 		if (destination instanceof Duplex) {
 			this.inner.pipe(destination);
@@ -64,10 +66,10 @@ export class WFReadable<O> {
 		return destination;
 	}
 
-	merge<T>(destination: WFTransform<O, T>): WFTransform<O, T>;
-	merge(destination: WFWritable<O>): WFWritable<O>;
-	merge<T>(destination: WFWritable<O> | WFTransform<O, T>): WFWritable<O> | WFTransform<O, T> {
-		return this.pipe(destination);
+	merge<T>(destination: WFTransform<O, T>): WFReadable<T>;
+	merge<T>(destination: WFTransform<O, T>): WFReadable<T> {
+		this.pipe(destination);
+		return new WFReadable(destination.inner);
 	}
 
 	[Symbol.asyncIterator](): AsyncIterator<O> {
@@ -103,7 +105,8 @@ export function wrapTransform<I, O>(inner: WFTransformSource<I, O>): WFTransform
 	throw Error('unknown transform');
 }
 
-export class WFTransform<I, O> {
+export class WFTransform<I = unknown, O = I> {
+	readonly type = 'Transform';
 	inner: Duplex;
 	constructor(inner: Duplex) {
 		this.inner = inner;
@@ -162,7 +165,8 @@ export function wrapWrite<I>(inner: WFWriteSource<I>): WFWritable<I> {
 	throw Error('unknown writable');
 }
 
-export class WFWritable<I> {
+export class WFWritable<I = unknown> {
+	readonly type = 'Writable';
 	inner: Writable;
 	constructor(inner: Writable) {
 		this.inner = inner;

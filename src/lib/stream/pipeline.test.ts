@@ -52,7 +52,7 @@ describe('pipeline', () => {
 		const readable = Readable.from(['chunk1', 'chunk2', 'chunk3']);
 
 		const asyncWritable = async (chunk: unknown) => {
-			expect(chunk.toString()).toMatch(/CHUNK[123]/);
+			expect(String(chunk)).toMatch(/CHUNK[123]/);
 		};
 
 		await pipeline(readable, async (chunk) => chunk.toString().toUpperCase(), asyncWritable);
