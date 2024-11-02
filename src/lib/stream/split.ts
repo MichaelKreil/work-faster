@@ -1,11 +1,12 @@
-import { type Readable, Transform } from 'node:stream';
+import { Transform } from 'node:stream';
 import { StringDecoder } from 'node:string_decoder';
+import { WFReadable, WFTransform } from './types.js';
 
-export function split(matcher: string | RegExp = /\r?\n/, format: BufferEncoding = 'utf8'): Transform {
+export function split(matcher: string | RegExp = /\r?\n/, format: BufferEncoding = 'utf8'): WFTransform<Buffer, string> {
 	let last = '';
 	const decoder = new StringDecoder(format);
 
-	return new Transform({
+	return new WFTransform(new Transform({
 		autoDestroy: true,
 		readableObjectMode: true,
 		transform: function (chunk: string, enc: BufferEncoding, cb: () => void) {
@@ -20,10 +21,10 @@ export function split(matcher: string | RegExp = /\r?\n/, format: BufferEncoding
 			this.push(last);
 			cb();
 		}
-	})
+	}))
 }
 
-export async function* asLines(stream: Readable, matcher?: string | RegExp): AsyncGenerator<string> {
+export async function* asLines(stream: WFReadable<Buffer>, matcher?: string | RegExp): AsyncGenerator<string> {
 	for await (const line of stream.pipe(split(matcher))) {
 		yield line;
 	}

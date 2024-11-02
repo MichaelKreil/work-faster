@@ -1,7 +1,8 @@
 import child_process from 'node:child_process';
 import { Transform } from 'node:stream';
+import { WFTransform } from './types.js';
 
-export function spawn(command: string, args: string[]): Transform {
+export function spawn(command: string, args: string[]): WFTransform<Buffer, Buffer> {
 	const cp = child_process.spawn(command, args, {
 		stdio: ['pipe', 'pipe', 'pipe'], // Redirect stderr to allow error handling
 	});
@@ -55,5 +56,5 @@ export function spawn(command: string, args: string[]): Transform {
 		emitErrorOnce(new Error(`Failed to execute command: ${err.message}`));
 	});
 
-	return transformStream;
+	return new WFTransform(transformStream);
 }

@@ -1,13 +1,13 @@
 import { createReadStream, statSync } from 'node:fs';
-import { Readable } from 'node:stream';
 import http from 'node:http';
 import https from 'node:https';
+import { WFReadable } from './types.js';
 
 /**
  * Reads a file from a local path or URL and returns a readable stream and its size.
  */
-export async function read(filename: string): Promise<{ stream: Readable; size: number }> {
-	let stream: Readable, size: number = 0;
+export async function read(filename: string): Promise<{ stream: WFReadable<Buffer>; size: number }> {
+	let stream, size: number = 0;
 
 	if (filename.startsWith('http://')) {
 		stream = await getHttpStream(http, filename);
@@ -25,7 +25,7 @@ export async function read(filename: string): Promise<{ stream: Readable; size: 
 		}
 	}
 
-	return { stream, size };
+	return { stream: new WFReadable(stream), size };
 }
 
 /**

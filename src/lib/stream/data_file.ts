@@ -15,11 +15,11 @@ export async function readDataFile(filename: string, compression: Compression | 
 	if (progress && size) {
 		const progress = new ProgressBar(size);
 		let pos = 0;
-		stream.on('data', (chunk: Buffer) => {
+		stream.inner.on('data', (chunk: Buffer) => {
 			pos += chunk.length;
 			progress.update(pos);
 		});
-		stream.on('close', () => progress.close());
+		stream.inner.on('close', () => progress.close());
 	}
 
 	// Decompress the stream if needed
