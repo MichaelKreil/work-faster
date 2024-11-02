@@ -4,7 +4,7 @@ import { type WFTransform, wrapTransform } from './types.js';
 
 export type Compression = 'gzip' | 'brotli' | 'lz4' | 'zstd';
 
-interface CompressOptions {
+export interface CompressOptions {
 	level?: number; // Optional compression level, applicable for gzip and zstd
 }
 
