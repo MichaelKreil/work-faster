@@ -44,3 +44,9 @@ export async function toArray<I, O>(stream: WFReadable<O> | WFTransform<I, O>): 
 	for await (const chunk of stream) chunks.push(chunk);
 	return chunks;
 }
+
+export async function arrayFromAsync<T>(iter: AsyncIterable<T>): Promise<T[]> {
+	const array = [];
+	for await (const item of iter) array.push(item);
+	return array;
+}

@@ -1,5 +1,6 @@
 import { asBuffer } from './conversion.js';
 import { WFTransform, wrapRead, wrapTransform } from './types.js';
+import { arrayFromAsync } from './utils.js';
 
 describe('asBuffer', () => {
 	const stringData = 'This is a test string';
@@ -10,7 +11,7 @@ describe('asBuffer', () => {
 			const readable = wrapRead([stringData, bufferData]);
 			const bufferReadable = asBuffer(readable);
 
-			const chunks = await Array.fromAsync(bufferReadable);
+			const chunks = await arrayFromAsync(bufferReadable);
 
 			expect(chunks).toHaveLength(2);
 			expect(Buffer.isBuffer(chunks[0])).toBe(true);
@@ -28,7 +29,7 @@ describe('asBuffer', () => {
 			const bufferTransform = asBuffer(transform) as WFTransform<string | Buffer, Buffer>;
 
 			const transformedData = wrapRead([stringData, bufferData]).pipe(bufferTransform);
-			const chunks = await Array.fromAsync(transformedData);
+			const chunks = await arrayFromAsync(transformedData);
 
 			expect(chunks).toHaveLength(2);
 			expect(Buffer.isBuffer(chunks[0])).toBe(true);
@@ -41,7 +42,7 @@ describe('asBuffer', () => {
 			const bufferTransform = asBuffer(passthroughTransform) as WFTransform<Buffer | string, Buffer>;
 
 			const transformedData = wrapRead([bufferData]).pipe(bufferTransform);
-			const chunks = await Array.fromAsync(transformedData);
+			const chunks = await arrayFromAsync(transformedData);
 
 			expect(chunks).toHaveLength(1);
 			expect(chunks[0]).toEqual(bufferData); // Original buffer data should be unchanged
