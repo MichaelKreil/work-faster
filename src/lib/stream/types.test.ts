@@ -36,7 +36,7 @@ describe('Stream Wrapper Functions', () => {
 		it('should wrap a function into WFTransform', async () => {
 			const wrappedFuncTransform = wrapTransform((data: string) => data.toString().toUpperCase());
 			expect(wrappedFuncTransform).toBeInstanceOf(WFTransform);
-			expect(await toArray(fromArray(['TestData']).pipe(wrappedFuncTransform))).toEqual(['TESTDATA'])
+			expect(await toArray(fromArray(['TestData']).pipe(wrappedFuncTransform))).toEqual(['TESTDATA']);
 		});
 	});
 
@@ -72,6 +72,22 @@ describe('Stream Wrapper Functions', () => {
 			wfReadable.pipe(wfTransform);
 			expect(await toArray(wfTransform)).toEqual([3, 6, 9]);
 		});
+
+		it('should respect backpressure in write method', async () => {
+			// Simulates backpressure
+			const wfTransform = wrapTransform(chunk => new Promise(r => setTimeout(() => r(chunk), 10)));
+			for (let i = 0; i < wfTransform.inner.writableHighWaterMark; i++) wfTransform.write(testData);
+			expect(wfTransform.inner.write(testData)).toBe(false); // write returns false, indicating backpressure
+		});
+
+		it('should complete the stream with end method', async () => {
+			const mockDuplex = new Transform();
+			const wfTransform = new WFTransform(mockDuplex);
+
+			const endPromise = wfTransform.end();
+			mockDuplex.emit('finish'); // Simulate stream finishing
+			await endPromise; // waits for finish
+		});
 	});
 
 	describe('WFWritable Class', () => {
@@ -81,8 +97,23 @@ describe('Stream Wrapper Functions', () => {
 
 			wfWritable.inner.write(testData, () => {
 				expect(writeFunc).toHaveBeenCalledWith(testData);
-				done()
+				done();
 			});
+		});
+
+		it('should respect backpressure in write method', async () => {
+			// Simulates backpressure
+			const wfWritable = wrapWrite(() => new Promise(r => setTimeout(() => r(), 10)));
+			for (let i = 0; i < wfWritable.inner.writableHighWaterMark; i++) wfWritable.write(testData);
+			expect(wfWritable.inner.write(testData)).toBe(false); // write returns false, indicating backpressure
+		});
+
+		it('should complete the stream with end method', async () => {
+			const mockWritable = new Writable();
+			const wfWritable = new WFWritable(mockWritable);
+			const endPromise = wfWritable.end();
+			mockWritable.emit('finish'); // Simulate stream finishing
+			await endPromise; // waits for finish
 		});
 	});
 });

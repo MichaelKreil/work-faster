@@ -108,6 +108,7 @@ export function wrapTransform<I, O>(inner: WFTransformSource<I, O>): WFTransform
 export class WFTransform<I = unknown, O = I> {
 	readonly type = 'Transform';
 	inner: Duplex;
+
 	constructor(inner: Duplex) {
 		this.inner = inner;
 	}
@@ -134,6 +135,23 @@ export class WFTransform<I = unknown, O = I> {
 
 	[Symbol.asyncIterator](): AsyncIterator<O> {
 		return this.inner[Symbol.asyncIterator]()
+	}
+
+	// Write method that respects backpressure
+	async write(content: Buffer): Promise<void> {
+		if (!this.inner.write(content)) {
+			return await new Promise(res => this.inner.once('drain', res));
+		}
+	}
+
+	// End method that finalizes the stream
+	async end(): Promise<void> {
+		return new Promise((resolve, reject) => {
+			this.inner.end((error: Error) => {
+				if (error) reject(error);
+				else resolve();
+			});
+		});
 	}
 }
 
@@ -168,8 +186,25 @@ export function wrapWrite<I>(inner: WFWriteSource<I>): WFWritable<I> {
 export class WFWritable<I = unknown> {
 	readonly type = 'Writable';
 	inner: Writable;
+
 	constructor(inner: Writable) {
 		this.inner = inner;
 	}
-}
 
+	// Write method that respects backpressure
+	async write(content: Buffer): Promise<void> {
+		if (!this.inner.write(content)) {
+			return await new Promise(res => this.inner.once('drain', res));
+		}
+	}
+
+	// End method that finalizes the stream
+	async end(): Promise<void> {
+		return new Promise((resolve, reject) => {
+			this.inner.end((error: Error) => {
+				if (error) reject(error);
+				else resolve();
+			});
+		});
+	}
+}
