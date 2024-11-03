@@ -1,4 +1,4 @@
-import { ProgressBar } from '../progress_bar.js';
+import { ProgressBar } from '../utils/progress_bar.js';
 import { read } from './read.js';
 import { Compression, decompress } from './compress.js';
 import { Format, parser } from './parser.js';
