@@ -25,7 +25,7 @@ describe('forEachAsync', () => {
 	});
 
 	it('should respect the maxParallel limit', async () => {
-		const list = [1, 2, 3, 4, 5];
+		const list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 		const maxParallel = 2;
 		let concurrentTasks = 0;
 		let maxConcurrentTasks = 0;
@@ -33,7 +33,7 @@ describe('forEachAsync', () => {
 		const callback = jest.fn(async () => {
 			concurrentTasks++;
 			maxConcurrentTasks = Math.max(maxConcurrentTasks, concurrentTasks);
-			await randomWait(10);
+			await randomWait(30);
 			concurrentTasks--;
 		});
 
