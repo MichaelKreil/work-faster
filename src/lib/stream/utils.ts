@@ -1,5 +1,5 @@
-import { Readable } from 'node:stream';
-import { WFReadable, WFTransform } from './types.js';
+import { Readable, Transform } from 'node:stream';
+import { WFReadable, WFTransform, wrapTransform } from './types.js';
 
 export function fromValue<T>(input: T): WFReadable<T> {
 	return new WFReadable(Readable.from([input]));
@@ -49,4 +49,16 @@ export async function arrayFromAsync<T>(iter: AsyncIterable<T>): Promise<T[]> {
 	const array = [];
 	for await (const item of iter) array.push(item);
 	return array;
+}
+
+export function flatten<T>(): WFTransform<T[], T> {
+	return wrapTransform(new Transform({
+		objectMode: true,
+		transform(chunk: T[], _encoding, callback) {
+			if (Array.isArray(chunk)) {
+				for (const obj of chunk) this.push(obj);
+			}
+			callback();
+		}
+	}));
 }

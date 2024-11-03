@@ -1,4 +1,4 @@
-import { fromValue, fromArray, toString, toBuffer, toArray } from './utils.js';
+import { flatten, fromValue, fromArray, toString, toBuffer, toArray } from './utils.js';
 import { WFReadable } from './types.js';
 
 describe('Utils Module', () => {
@@ -74,6 +74,35 @@ describe('Utils Module', () => {
 			const input = [Buffer.from('buffer1'), 'string element', Buffer.from('buffer2')];
 			const readable = fromArray(input);
 			expect(await toArray(readable)).toEqual(input);
+		});
+	});
+
+	describe('flatten', () => {
+		it('should flatten a stream of arrays of objects into individual objects', async () => {
+			const input = [[{ id: 1 }, { id: 2 }], [{ id: 3 }, { id: 4 }]];
+			const readable = fromArray(input);
+			const flattened = readable.pipe(flatten());
+
+			const result = await toArray(flattened);
+			expect(result).toEqual([{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }]);
+		});
+
+		it('should handle multiple arrays in a stream', async () => {
+			const input = [[{ id: 1 }], [{ id: 2 }, { id: 3 }], [{ id: 4 }]];
+			const readable = fromArray(input);
+			const flattened = readable.pipe(flatten());
+
+			const result = await toArray(flattened);
+			expect(result).toEqual([{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }]);
+		});
+
+		it('should handle empty arrays without emitting any objects', async () => {
+			const input = [[{ id: 1 }], [], [{ id: 2 }, { id: 3 }], []];
+			const readable = fromArray(input);
+			const flattened = readable.pipe(flatten());
+
+			const result = await toArray(flattened);
+			expect(result).toEqual([{ id: 1 }, { id: 2 }, { id: 3 }]);
 		});
 	});
 
