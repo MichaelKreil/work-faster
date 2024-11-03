@@ -138,10 +138,14 @@ export class WFTransform<I = unknown, O = I> {
 	}
 
 	// Write method that respects backpressure
-	async write(content: Buffer): Promise<void> {
-		if (!this.inner.write(content)) {
-			return await new Promise(res => this.inner.once('drain', res));
-		}
+	write(content: Buffer): Promise<void> {
+		return new Promise(r => {
+			if (!this.inner.write(content)) {
+				this.inner.once('drain', r);
+			} else {
+				r();
+			}
+		})
 	}
 
 	// End method that finalizes the stream
@@ -192,10 +196,14 @@ export class WFWritable<I = unknown> {
 	}
 
 	// Write method that respects backpressure
-	async write(content: Buffer): Promise<void> {
-		if (!this.inner.write(content)) {
-			return await new Promise(res => this.inner.once('drain', res));
-		}
+	write(content: Buffer): Promise<void> {
+		return new Promise(r => {
+			if (!this.inner.write(content)) {
+				this.inner.once('drain', r);
+			} else {
+				r();
+			}
+		})
 	}
 
 	// End method that finalizes the stream
