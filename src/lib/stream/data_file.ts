@@ -4,9 +4,10 @@ import { Compression, decompress } from './compress.js';
 import { Format, parser } from './parser.js';
 import { asLines } from './split.js';
 
-export async function readDataFile(filename: string, compression: Compression | null, format: Format, progress?: boolean): Promise<AsyncGenerator<object>>
-export async function readDataFile(filename: string, compression: Compression | null, format: null, progress?: boolean): Promise<AsyncGenerator<string>>
-export async function readDataFile(filename: string, compression: Compression | null, format: Format | null, progress?: boolean): Promise<AsyncGenerator<object | string>> {
+export async function readDataFile(filename: string, compression: Compression | null, format: Format, progress?: boolean): Promise<AsyncIterable<object>>
+export async function readDataFile(filename: string, compression: Compression | null, format?: null, progress?: boolean): Promise<AsyncIterable<string>>
+
+export async function readDataFile(filename: string, compression: Compression | null, format: Format | null = null, progress?: boolean): Promise<AsyncIterable<object | string>> {
 	// Read the initial stream
 	// eslint-disable-next-line prefer-const
 	let { stream, size } = await read(filename);

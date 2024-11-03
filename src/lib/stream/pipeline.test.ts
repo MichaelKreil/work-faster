@@ -1,6 +1,7 @@
 // pipeline.test.ts
 import { Readable, Transform, Writable } from 'node:stream';
 import { pipeline } from './pipeline.js';
+import { wrapWrite } from './types.js';
 
 describe('pipeline', () => {
 	it('should handle a pipeline with readable, transform, and writable streams', async () => {
@@ -66,14 +67,7 @@ describe('pipeline', () => {
 		}
 
 		const output: string[] = [];
-		const writable = new Writable({
-			objectMode: true,
-			write(chunk, _encoding, callback) {
-				output.push(chunk.toString());
-				callback();
-			},
-		});
-
+		const writable = wrapWrite((chunk: string) => output.push(chunk));
 		await pipeline(asyncGenerator(), (chunk) => chunk.toString().toUpperCase(), writable);
 
 		expect(output).toEqual(['ASYNC1', 'ASYNC2', 'ASYNC3']);

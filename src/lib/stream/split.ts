@@ -24,7 +24,7 @@ export function split(matcher: string | RegExp = /\r?\n/, format: BufferEncoding
 	}))
 }
 
-export async function* asLines(stream: WFReadable<Buffer | string>, matcher?: string | RegExp): AsyncGenerator<string> {
+export async function* asLines(stream: WFReadable<Buffer | string>, matcher?: string | RegExp): AsyncIterable<string> {
 	for await (const line of stream.pipe(split(matcher))) {
 		yield line;
 	}

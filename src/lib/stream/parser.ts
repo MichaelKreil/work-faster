@@ -7,7 +7,7 @@ export type Format = 'csv' | 'csv_fast' | 'json';
 /**
  * Parses the stream content based on file type (CSV or JSON).
  */
-export function parser(format: Format, stream: WFReadable<Buffer | string>): AsyncGenerator<object> {
+export function parser(format: Format, stream: WFReadable<Buffer | string>): AsyncIterable<object> {
 	switch (format) {
 		case 'csv': return parseCSV(stream);
 		case 'csv_fast': return parseCSVFast(stream);
@@ -19,7 +19,7 @@ export function parser(format: Format, stream: WFReadable<Buffer | string>): Asy
 /**
  * Fast CSV parser, assumes the first line is a header and uses it to map CSV values to object keys.
  */
-async function* parseCSVFast(stream: WFReadable<Buffer | string>): AsyncGenerator<object> {
+async function* parseCSVFast(stream: WFReadable<Buffer | string>): AsyncIterable<object> {
 	let header: string[] | null = null, separator: string = ',';
 
 	for await (const line of asLines(stream)) {
@@ -46,7 +46,7 @@ async function* parseCSVFast(stream: WFReadable<Buffer | string>): AsyncGenerato
 /**
  * Standard CSV parser using PapaParse.
  */
-async function* parseCSV(stream: WFReadable<Buffer | string>): AsyncGenerator<object> {
+async function* parseCSV(stream: WFReadable<Buffer | string>): AsyncIterable<object> {
 	const parser = wrapTransform<Buffer, object>(papa.parse(papa.NODE_STREAM_INPUT, { header: true }));
 	stream.pipe(parser);
 	for await (const entry of parser) {
@@ -57,7 +57,7 @@ async function* parseCSV(stream: WFReadable<Buffer | string>): AsyncGenerator<ob
 /**
  * JSON parser that splits JSON objects and parses each line.
  */
-async function* parseNDJSON(stream: WFReadable<Buffer | string>): AsyncGenerator<object> {
+async function* parseNDJSON(stream: WFReadable<Buffer | string>): AsyncIterable<object> {
 	for await (const line of asLines(stream)) {
 		if (line.length > 0) yield JSON.parse(line);
 	};
