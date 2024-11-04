@@ -26,23 +26,23 @@ export function split(matcher: string | RegExp = /\r?\n/, format: BufferEncoding
 	}))
 }
 
-export function splitLines(): WFTransform<Buffer, string> {
+export function splitFast(code: number = 10): WFTransform<Buffer, string> {
 	let bufferChunks: Buffer[] = [];
 	let accumulatedSize = 0;
 	let lastChunk = Buffer.alloc(0);
 
-	// Helper function to process a buffer, splitting it by 0x0a and pushing each part
+	// Helper function to process a buffer, splitting it by `code` and pushing each part
 	function processBuffer(push: (chunk: string) => void) {
 		const buffer = Buffer.concat([lastChunk, ...bufferChunks]);
 		let start = 0;
 		let end;
 
-		while ((end = buffer.indexOf(0x0a, start)) !== -1) {
+		while ((end = buffer.indexOf(code, start)) !== -1) {
 			push(buffer.subarray(start, end).toString());
 			start = end + 1;
 		}
 
-		// Return any remaining data that doesn't end in 0x0a
+		// Return any remaining data that doesn't end in `code`
 		lastChunk = buffer.subarray(start);
 	}
 
@@ -75,9 +75,23 @@ export function splitLines(): WFTransform<Buffer, string> {
 	}));
 }
 
-export async function* asLines(stream: WFReadable<Buffer | string>, matcher?: string | RegExp): AsyncIterable<string> {
-	const lines: WFTransform<Buffer, string> = matcher ? split(matcher) : splitLines();
-	for await (const line of stream.pipe(lines)) {
+export async function* asLines(
+	stream: WFReadable<Buffer | string>,
+	delimiter?: string | RegExp | number
+): AsyncIterable<string> {
+	let splitter: WFTransform<Buffer, string>;
+	if (delimiter == null) {
+		splitter = splitFast();
+	} else if ((typeof delimiter == 'string') && (delimiter.length == 1) && (delimiter.charCodeAt(0) < 127)) {
+		splitter = splitFast(delimiter.charCodeAt(0));
+	} else if (typeof delimiter == 'number') {
+		if (delimiter >= 127) throw Error('numeric matcher must be < 127');
+		splitter = splitFast(delimiter);
+	} else {
+		splitter = split(delimiter);
+	}
+
+	for await (const line of stream.pipe(splitter)) {
 		yield line;
 	}
 }

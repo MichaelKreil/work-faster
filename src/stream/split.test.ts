@@ -1,5 +1,5 @@
 import { asBuffer } from './conversion.js';
-import { asLines, split, splitLines } from './split.js';
+import { asLines, split, splitFast } from './split.js';
 import { arrayFromAsync, fromArray, fromValue, toArray } from './utils.js';
 
 describe('split', () => {
@@ -37,13 +37,13 @@ describe('split', () => {
 describe('splitLines', () => {
 	it('should split data by 0xA0 delimiter', async () => {
 		const input = fromValue(Buffer.from('part1\npart2\npart3\n'));
-		const results = await toArray(input.pipe(splitLines()));
+		const results = await toArray(input.pipe(splitFast()));
 		expect(results).toEqual(['part1', 'part2', 'part3']);
 	});
 
 	it('should handle partial data across chunks', async () => {
 		const input = fromArray([Buffer.from('partial1\npartial'), Buffer.from('2\npartial3\n')]);
-		const results = await toArray(input.pipe(splitLines()));
+		const results = await toArray(input.pipe(splitFast()));
 		expect(results).toEqual(['partial1', 'partial2', 'partial3']);
 	});
 
@@ -51,14 +51,14 @@ describe('splitLines', () => {
 		// Create large data of 16MB with repeated patterns split by 0xA0
 		const largeData = Buffer.concat(Array(16 * 1024).fill(Buffer.from('data\n')));
 		const input = fromValue(largeData);
-		const results = await toArray(input.pipe(splitLines()));
+		const results = await toArray(input.pipe(splitFast()));
 		const expected = Array(16 * 1024).fill('data');
 		expect(results).toEqual(expected);
 	});
 
 	it('should push the last segment on flush if not ending with 0xA0', async () => {
 		const input = fromValue(Buffer.from('lastSegmentWithoutDelimiter'));
-		const results = await toArray(input.pipe(splitLines()));
+		const results = await toArray(input.pipe(splitFast()));
 		expect(results).toEqual(['lastSegmentWithoutDelimiter']);
 	});
 });
