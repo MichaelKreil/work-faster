@@ -1,8 +1,8 @@
 import os from 'node:os';
 
-export function forEachAsync<V>(
-	items: Iterable<V> | AsyncIterable<V> | Iterator<V> | AsyncIterator<V>,
-	callback: (item: V, index: number) => Promise<void>,
+export function forEachAsync<I>(
+	items: Iterable<I> | AsyncIterable<I> | Iterator<I> | AsyncIterator<I>,
+	callback: (item: I, index: number) => Promise<void>,
 	maxParallel?: number
 ): Promise<void> {
 	const concurrency = maxParallel ?? os.cpus().length;
@@ -31,7 +31,7 @@ export function forEachAsync<V>(
 
 				const currentIndex = index++;
 
-				callback(value as V, currentIndex)
+				callback(value as I, currentIndex)
 					.then(() => {
 						running--;
 						// Schedule the next task after completing the current one
