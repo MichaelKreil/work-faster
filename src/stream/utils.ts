@@ -62,3 +62,22 @@ export function flatten<T>(): WFTransform<T[], T> {
 		}
 	}));
 }
+
+/**
+ * Creates a pass-through transformation stream that forwards data unchanged.
+ * 
+ * @template T - The type of elements in the stream.
+ * @returns A `WFTransform` stream that passes data through without modification.
+ * 
+ * @example
+ * const stream = passThrough<number>();
+ * stream.write(1);
+ * stream.write(2);
+ * stream.end();
+ * for await (const item of stream) {
+ *   console.log(item); // 1, 2
+ * }
+ */
+export function passThrough<T>(): WFTransform<T, T> {
+	return wrapTransform(new PassThrough({ objectMode: true }));
+}
