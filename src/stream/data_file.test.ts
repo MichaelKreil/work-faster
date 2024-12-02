@@ -43,6 +43,7 @@ describe('readDataFile', () => {
 
 		// Set up a mock stream
 		mockStream = asBuffer(fromValue(Buffer.from('test')));
+		mockStream.merge = <T>() => mockStream as WFReadable<T>;
 
 		// Mock `read` to return a Promise with a mock stream and size
 		jest.mocked(read).mockResolvedValue({ stream: mockStream, size: 13 });
@@ -54,28 +55,27 @@ describe('readDataFile', () => {
 		jest.mocked(asLines).mockReturnValue(fromArray(['line1', 'line2', 'line3']));
 
 		// Mock `parser` to return parsed results
-		jest.mocked(parser).mockReturnValue(fromArray([{ parsed: 'line1' }, { parsed: 'line2' }]));
+		jest.mocked(parser).mockReturnValue(fromArray([{ parsed: 'line1' }, { parsed: 'line2' }]) as AsyncIterable<string>);
 	});
 
 	it('should read a file without compression or parsing, returning lines', async () => {
-		const gen = await readDataFile('file.txt', null, null);
+		const gen = await readDataFile('file.txt');
 		const result = await arrayFromAsync(gen);
 
 		expect(read).toHaveBeenCalledWith('file.txt');
-		expect(asLines).toHaveBeenCalledWith(mockStream);
-		expect(result).toStrictEqual(['line1', 'line2', 'line3']);
+		expect(result).toStrictEqual([{ parsed: 'line1' }, { parsed: 'line2' }]);
 	});
 
 	it('should decompress the stream if compression is specified', async () => {
-		const gen = await readDataFile('file.txt.gz', 'gzip', null);
+		const gen = await readDataFile('file.txt.gz', { compression: 'gzip' });
 		const result = await arrayFromAsync(gen);
 
 		expect(decompress).toHaveBeenCalledWith('gzip');
-		expect(result).toStrictEqual(['line1', 'line2', 'line3']);  // Assuming decompressed content is mocked with asLines
+		expect(result).toStrictEqual([{ parsed: 'line1' }, { parsed: 'line2' }]);
 	});
 
 	it('should parse the stream based on format when format is specified', async () => {
-		const gen = await readDataFile('file.txt', null, 'json');
+		const gen = await readDataFile('file.txt', { format: 'json' });
 		const result = await arrayFromAsync(gen);
 
 		expect(parser).toHaveBeenCalledWith('json', mockStream);
@@ -83,11 +83,42 @@ describe('readDataFile', () => {
 	});
 
 	it('should track progress if enabled', async () => {
-		// Mock `ProgressBar` to check its instantiation and method calls
-		const gen = await readDataFile('file.txt', null, null, true);
+		const gen = await readDataFile('file.txt', { progress: true });
 		const result = await arrayFromAsync(gen);
 
 		expect(ProgressBar).toHaveBeenCalledWith(13);
-		expect(result).toStrictEqual(['line1', 'line2', 'line3']);
+		expect(result).toStrictEqual([{ parsed: 'line1' }, { parsed: 'line2' }]);
+	});
+
+	it('should handle files with unknown format gracefully', async () => {
+		await expect(readDataFile('file.unknown', { format: 'unknown' as unknown as 'json' })).rejects.toThrow('Unsupported format: unknown');
+	});
+
+	it('should handle files with no compression', async () => {
+		const gen = await readDataFile('file.txt', { compression: 'none' });
+		const result = await arrayFromAsync(gen);
+
+		expect(decompress).not.toHaveBeenCalled();
+		expect(result).toStrictEqual([{ parsed: 'line1' }, { parsed: 'line2' }]);
+	});
+
+	it('should handle empty files gracefully', async () => {
+		jest.mocked(read).mockResolvedValue({ stream: fromArray([]), size: 0 });
+		jest.mocked(asLines).mockReturnValue(fromArray([]));
+		jest.mocked(parser).mockReturnValue(fromArray([]) as AsyncIterable<string>);
+
+		const gen = await readDataFile('empty.txt');
+		const result = await arrayFromAsync(gen);
+
+		expect(result).toStrictEqual([]);
+	});
+
+	it('should parse compressed and formatted files correctly', async () => {
+		const gen = await readDataFile('file.csv.gz', { compression: 'gzip', format: 'csv' });
+		const result = await arrayFromAsync(gen);
+
+		expect(decompress).toHaveBeenCalledWith('gzip');
+		expect(parser).toHaveBeenCalledWith('csv', mockStream);
+		expect(result).toStrictEqual([{ parsed: 'line1' }, { parsed: 'line2' }]);
 	});
 });
