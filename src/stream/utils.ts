@@ -1,32 +1,65 @@
-import { Readable, Transform } from 'node:stream';
+import { PassThrough, Readable, Transform } from 'node:stream';
 import { WFReadable, WFTransform, wrapTransform } from './types.js';
 
+/**
+ * Creates a readable stream from a single value.
+ * 
+ * @template T - The type of the input value.
+ * @param input - The value to convert to a stream.
+ * @returns A `WFReadable` stream containing the input value.
+ * 
+ * @example
+ * const stream = fromValue('hello');
+ * for await (const chunk of stream) {
+ *   console.log(chunk); // 'hello'
+ * }
+ */
 export function fromValue<T>(input: T): WFReadable<T> {
 	return new WFReadable(Readable.from([input]));
 }
 
 /**
- * Converts an array of strings or buffers into a readable stream.
- * @param input The array of strings or buffers to convert to a stream.
- * @returns A readable stream containing the array data.
+ * Creates a readable stream from an array of values.
+ * 
+ * @template T - The type of elements in the input array.
+ * @param input - The array of values to convert to a stream.
+ * @returns A `WFReadable` stream containing the array elements.
+ * 
+ * @example
+ * const stream = fromArray([1, 2, 3]);
+ * for await (const chunk of stream) {
+ *   console.log(chunk); // 1, then 2, then 3
+ * }
  */
 export function fromArray<T>(input: T[]): WFReadable<T> {
 	return new WFReadable(Readable.from(input));
 }
 
 /**
- * Collects all data from a stream and returns it as a single string.
- * @param stream A readable stream to collect data from.
- * @returns A promise that resolves with the stream data as a string.
+ * Converts a stream of `Buffer` or `string` data into a single concatenated string.
+ * 
+ * @template I - The type of input data chunks in the stream.
+ * @param stream - A `WFReadable` or `WFTransform` stream to collect data from.
+ * @returns A promise that resolves to the concatenated string.
+ * 
+ * @example
+ * const data = await toString(stream);
+ * console.log(data); // The concatenated string from the stream
  */
 export async function toString<I>(stream: WFReadable<Buffer | string> | WFTransform<I, Buffer | string>): Promise<string> {
 	return (await toBuffer(stream)).toString();
 }
 
 /**
- * Collects all data from a stream and returns it as a single Buffer.
- * @param stream A readable stream to collect data from.
- * @returns A promise that resolves with the stream data as a Buffer.
+ * Collects all data from a stream and concatenates it into a single `Buffer`.
+ * 
+ * @template I - The type of input data chunks in the stream.
+ * @param stream - A `WFReadable` or `WFTransform` stream to collect data from.
+ * @returns A promise that resolves to a `Buffer` containing the concatenated data.
+ * 
+ * @example
+ * const buffer = await toBuffer(stream);
+ * console.log(buffer.toString()); // The content of the stream as a string
  */
 export async function toBuffer<I>(stream: WFReadable<Buffer | string> | WFTransform<I, Buffer | string>): Promise<Buffer> {
 	const chunks: Buffer[] = [];
@@ -35,9 +68,16 @@ export async function toBuffer<I>(stream: WFReadable<Buffer | string> | WFTransf
 }
 
 /**
- * Collects all data chunks from a stream and returns them in an array.
- * @param stream A readable stream to collect data from.
- * @returns A promise that resolves with an array of the stream data chunks.
+ * Collects all chunks of data from a stream into an array.
+ * 
+ * @template I - The type of input data chunks in the stream.
+ * @template O - The type of output data chunks in the stream.
+ * @param stream - A `WFReadable` or `WFTransform` stream to collect data from.
+ * @returns A promise that resolves to an array of the data chunks.
+ * 
+ * @example
+ * const chunks = await toArray(stream);
+ * console.log(chunks); // [chunk1, chunk2, ...]
  */
 export async function toArray<I, O>(stream: WFReadable<O> | WFTransform<I, O>): Promise<O[]> {
 	const chunks: O[] = [];
@@ -45,12 +85,37 @@ export async function toArray<I, O>(stream: WFReadable<O> | WFTransform<I, O>): 
 	return chunks;
 }
 
+/**
+ * Collects all elements from an `AsyncIterable` and returns them as an array.
+ * 
+ * @template T - The type of elements in the async iterable.
+ * @param iter - An `AsyncIterable` to collect data from.
+ * @returns A promise that resolves to an array of elements from the iterable.
+ * 
+ * @example
+ * const array = await arrayFromAsync(asyncIterable);
+ * console.log(array); // [item1, item2, ...]
+ */
 export async function arrayFromAsync<T>(iter: AsyncIterable<T>): Promise<T[]> {
 	const array = [];
 	for await (const item of iter) array.push(item);
 	return array;
 }
 
+/**
+ * Creates a transformation stream that flattens arrays of values into individual elements.
+ * 
+ * @template T - The type of elements in the input arrays.
+ * @returns A `WFTransform` stream that emits individual elements from input arrays.
+ * 
+ * @example
+ * const stream = flatten<number>();
+ * stream.write([1, 2, 3]);
+ * stream.end();
+ * for await (const item of stream) {
+ *   console.log(item); // 1, 2, 3
+ * }
+ */
 export function flatten<T>(): WFTransform<T[], T> {
 	return wrapTransform(new Transform({
 		objectMode: true,
