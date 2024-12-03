@@ -61,7 +61,7 @@ export async function readDataFile(
 
 export async function readDataFile(
 	filename: string,
-	options: { compression?: Compression; format: 'lines'; progress?: boolean }
+	options: { compression?: Compression; format: 'lines' | undefined; progress?: boolean }
 ): Promise<AsyncIterable<string>>;
 
 export async function readDataFile(
@@ -90,7 +90,7 @@ export async function readDataFile(
 			pos += chunk.length;
 			progressBar.update(pos);
 		});
-		stream.inner.on('close', () => progressBar.close());
+		stream.inner.on('end', () => progressBar.close());
 	}
 
 	// Decompress the stream if needed
