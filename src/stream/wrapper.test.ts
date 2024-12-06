@@ -1,4 +1,5 @@
-import { wrap, wrapRead, wrapTransform, wrapWrite, WFReadable, WFTransform, WFWritable } from './types.js';
+import { wrap, wrapRead, wrapTransform, wrapWrite } from './wrapper.js';
+import { WFReadable, WFTransform, WFWritable } from './classes.js';
 import { Readable, Writable, Transform } from 'node:stream';
 import { fromArray, toArray, toString } from './utils.js';
 import { jest } from '@jest/globals';

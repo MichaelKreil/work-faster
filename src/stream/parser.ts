@@ -1,8 +1,8 @@
 import { asLines } from './split.js';
 import papa from 'papaparse';
-import { WFReadable, wrapTransform } from './types.js';
-
-export type Format = 'csv' | 'csv_fast' | 'json' | 'tsv' | 'lines';
+import { Format } from './types.js';
+import { wrapTransform } from './wrapper.js';
+import { WFReadable } from './classes.js';
 
 /**
  * Parses the content of a stream based on the specified format.

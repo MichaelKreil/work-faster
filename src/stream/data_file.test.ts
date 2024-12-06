@@ -1,7 +1,8 @@
 import { arrayFromAsync, fromArray, fromValue } from './utils.js';
 import { asBuffer } from './conversion.js';
-import { WFReadable, WFTransform, wrapTransform } from './types.js';
+import { WFReadable, WFTransform } from './classes.js';
 import { jest } from '@jest/globals';
+import { wrapTransform } from './wrapper.js';
 
 // Mock dependencies with unstable_mockModule
 jest.unstable_mockModule('./read.js', () => ({

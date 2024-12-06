@@ -9,3 +9,4 @@ export * from './spawn.js';
 export * from './split.js';
 export * from './types.js';
 export * from './utils.js';
+export * from './wrapper.js';

@@ -1,7 +1,7 @@
 import { createReadStream, statSync } from 'node:fs';
 import http from 'node:http';
 import https from 'node:https';
-import { WFReadable } from './types.js';
+import { WFReadable } from './classes.js';
 
 /**
  * Reads a file from a local path or URL and returns a readable stream and its size.

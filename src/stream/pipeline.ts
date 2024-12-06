@@ -1,5 +1,6 @@
-import type { WFReadSource as R, WFTransformSource as T, WFWriteSource as W, WFReadable, WFTransform } from './types.js';
-import { wrapRead, wrapTransform, wrapWrite } from './types.js';
+import { WFReadable, WFTransform } from './classes.js';
+import type { WFReadSource as R, WFTransformSource as T, WFWriteSource as W } from './wrapper.js';
+import { wrapRead, wrapTransform, wrapWrite } from './wrapper.js';
 
 export function pipeline<A>(r: R<A>, w: W<A>): Promise<void>;
 export function pipeline<A, B>(r: R<A>, t: T<A, B>, w: W<B>): Promise<void>;

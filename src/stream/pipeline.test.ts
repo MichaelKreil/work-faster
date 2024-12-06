@@ -1,7 +1,7 @@
 // pipeline.test.ts
 import { Readable, Transform, Writable } from 'node:stream';
 import { pipeline } from './pipeline.js';
-import { wrapWrite } from './types.js';
+import { wrapWrite } from './wrapper.js';
 
 describe('pipeline', () => {
 	it('should handle a pipeline with readable, transform, and writable streams', async () => {

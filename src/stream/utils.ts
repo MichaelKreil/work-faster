@@ -1,5 +1,6 @@
 import { PassThrough, Readable, Transform } from 'node:stream';
-import { WFReadable, WFTransform, wrapTransform } from './types.js';
+import { WFReadable, WFTransform } from './classes.js';
+import { wrapTransform } from './wrapper.js';
 
 /**
  * Creates a readable stream from a single value.

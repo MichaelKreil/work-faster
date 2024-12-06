@@ -1,4 +1,5 @@
-import { WFReadable, WFTransform, wrapTransform } from './types.js';
+import { WFReadable, WFTransform } from './classes.js';
+import { wrapTransform } from './wrapper.js';
 
 export function asBuffer(source: WFReadable<Buffer | string>): WFReadable<Buffer>;
 export function asBuffer<I>(source: WFTransform<I, Buffer | string>): WFTransform<I, Buffer>;

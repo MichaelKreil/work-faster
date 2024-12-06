@@ -1,6 +1,6 @@
 import { merge } from './merge.js';
 import { pipeline } from './pipeline.js';
-import { wrapTransform, wrapWrite } from './types.js';
+import { wrapTransform, wrapWrite } from './wrapper.js';
 import { fromArray, fromValue, toArray } from './utils.js';
 
 describe('merge function', () => {
