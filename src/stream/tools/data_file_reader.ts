@@ -3,14 +3,15 @@ import { read } from './read.js';
 import { decompress } from './compress.js';
 import { parser } from './parser.js';
 import type { Compression, Format } from '../types.js';
+import { WFReadable } from '../classes.js';
 
 /**
  * Reads a data file, optionally decompresses it, and parses it based on the specified format.
  * 
  * Overload signatures:
- * - For CSV, CSV Fast, and TSV formats: Returns `AsyncIterable<object>`.
- * - For JSON format: Returns `AsyncIterable<unknown>`.
- * - For lines of text: Returns `AsyncIterable<string>`.
+ * - For CSV, CSV Fast, and TSV formats: Returns `WFReadable<object>`.
+ * - For JSON format: Returns `WFReadable<unknown>`.
+ * - For lines of text: Returns `WFReadable<string>`.
  * 
  * @param filename - The path to the data file to be read.
  * @param options - Configuration options:
@@ -23,9 +24,9 @@ import type { Compression, Format } from '../types.js';
  *     - `'lines'`: Raw lines of text.
  *   - `progress`: Whether to display a progress bar for large files. Requires `size` metadata to be available.
  * @returns An async iterable containing the parsed data:
- *   - `AsyncIterable<object>` for `'csv'`, `'csv_fast'`, and `'tsv'`.
- *   - `AsyncIterable<unknown>` for `'json'`.
- *   - `AsyncIterable<string>` for `'lines'`.
+ *   - `WFReadable<object>` for `'csv'`, `'csv_fast'`, and `'tsv'`.
+ *   - `WFReadable<unknown>` for `'json'`.
+ *   - `WFReadable<string>` for `'lines'`.
  * 
  * @throws Error if the specified format or compression type is unsupported.
  * 
@@ -53,28 +54,28 @@ import type { Compression, Format } from '../types.js';
 export async function readDataFile(
 	filename: string,
 	options: { compression?: Compression; format: 'csv' | 'tsv'; progress?: boolean }
-): Promise<AsyncIterable<object>>;
+): Promise<WFReadable<Record<string, unknown>>>;
 
 export async function readDataFile(
 	filename: string,
 	options: { compression?: Compression; format: 'ndjson'; progress?: boolean }
-): Promise<AsyncIterable<unknown>>;
+): Promise<WFReadable<unknown>>;
 
 export async function readDataFile(
 	filename: string,
 	options: { compression?: Compression; format: 'lines' | undefined; progress?: boolean }
-): Promise<AsyncIterable<string>>;
+): Promise<WFReadable<string>>;
 
 export async function readDataFile(
 	filename: string,
 	options?: { compression?: Compression; format?: Format; progress?: boolean }
-): Promise<AsyncIterable<object | string | unknown>>;
+): Promise<WFReadable<Record<string, unknown> | string | unknown>>;
 
 // Implementation
 export async function readDataFile(
 	filename: string,
 	options?: { compression?: Compression; format?: Format; progress?: boolean }
-): Promise<AsyncIterable<object | string | unknown>> {
+): Promise<WFReadable<object | string | unknown>> {
 	// Read the initial stream
 	// eslint-disable-next-line prefer-const
 	let { stream, size } = await read(filename);
@@ -95,17 +96,17 @@ export async function readDataFile(
 	}
 
 	// Decompress the stream if needed
-	if (compression !== 'none') stream = stream.merge(await decompress(compression));
+	if (compression !== 'none') stream = stream.merge(decompress(compression));
 
 	// Parse the stream based on the specified format
 	switch (format) {
 		case 'csv':
 		case 'tsv':
-			return parser(format, stream); // Matches the first overload
+			return stream.merge(parser(format)); // Matches the first overload
 		case 'ndjson':
-			return parser(format, stream); // Matches the second overload
+			return stream.merge(parser(format)); // Matches the second overload
 		case 'lines':
-			return parser(format, stream); // Matches the third overload
+			return stream.merge(parser(format)); // Matches the third overload
 		default:
 			throw new Error(`Unsupported format: ${format}`);
 	}

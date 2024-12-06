@@ -1,6 +1,6 @@
 export * from './compress.js';
 export * from './conversion.js';
-export * from './data_file.js';
+export * from './data_file_reader.js';
 export * from './merge.js';
 export * from './parser.js';
 export * from './pipeline.js';
