@@ -25,9 +25,7 @@
     "url": "https://github.com/MichaelKreil/work-faster.git"
   },
   "type": "module",
-  "dependencies": {
-    "papaparse": "^5.4.1"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "@types/node": "^22.10.1",
