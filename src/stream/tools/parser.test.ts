@@ -3,7 +3,7 @@ import { parser } from './parser.js';
 
 describe('parser', () => {
 	describe('CSV parser', () => {
-		it('should parse CSV data using the standard parser', async () => {
+		it('should parse CSV data', async () => {
 			const stream = fromValue('name,age\nAlice,30\nBob,25\n');
 
 			const result: object[] = [];
@@ -24,25 +24,12 @@ describe('parser', () => {
 
 			expect(result).toEqual([]);
 		});
-	});
-
-	describe('CSV Fast parser', () => {
-		it('should parse CSV data using the fast parser', async () => {
-			const stream = fromValue('name,age\nAlice,30\nBob,25\n');
-
-			const result: object[] = [];
-			for await (const entry of parser('csv_fast', stream)) {
-				result.push(entry);
-			}
-
-			expect(result).toEqual([{ name: 'Alice', age: '30' }, { name: 'Bob', age: '25' }]);
-		});
 
 		it('should detect and parse CSV data with semicolon delimiter', async () => {
 			const stream = fromValue('name;age\nAlice;30\nBob;25\n');
 
 			const result: object[] = [];
-			for await (const entry of parser('csv_fast', stream)) {
+			for await (const entry of parser('csv', stream)) {
 				result.push(entry);
 			}
 
@@ -53,7 +40,7 @@ describe('parser', () => {
 			const stream = fromValue('name\tage\nAlice\t30\nBob\t25\n');
 
 			const result: object[] = [];
-			for await (const entry of parser('csv_fast', stream)) {
+			for await (const entry of parser('csv', stream)) {
 				result.push(entry);
 			}
 
@@ -64,7 +51,7 @@ describe('parser', () => {
 			const stream = fromValue('name,age\nAlice,30\n\nBob,25\n');
 
 			const result: object[] = [];
-			for await (const entry of parser('csv_fast', stream)) {
+			for await (const entry of parser('csv', stream)) {
 				result.push(entry);
 			}
 
@@ -90,7 +77,7 @@ describe('parser', () => {
 			const stream = fromValue('{"name":"Alice","age":30}\n{"name":"Bob","age":25}\n');
 
 			const result = [];
-			for await (const entry of parser('json', stream)) {
+			for await (const entry of parser('ndjson', stream)) {
 				result.push(entry);
 			}
 
@@ -101,7 +88,7 @@ describe('parser', () => {
 			const stream = fromValue('{"name":"Alice","age":30}\n\n{"name":"Bob","age":25}\n');
 
 			const result = [];
-			for await (const entry of parser('json', stream)) {
+			for await (const entry of parser('ndjson', stream)) {
 				result.push(entry);
 			}
 
@@ -113,7 +100,7 @@ describe('parser', () => {
 
 			const result = [];
 			await expect(async () => {
-				for await (const entry of parser('json', stream)) {
+				for await (const entry of parser('ndjson', stream)) {
 					result.push(entry);
 				}
 			}).rejects.toThrow();
@@ -159,7 +146,7 @@ describe('parser', () => {
 		it('should throw an error for unsupported formats', async () => {
 			const stream = fromValue('invalid format data');
 
-			await expect(() => parser('unsupported' as unknown as 'json', stream)).toThrow('Unknown format: unsupported');
+			await expect(() => parser('unsupported' as unknown as 'ndjson', stream)).toThrow('Unknown format: unsupported');
 		});
 	});
 });

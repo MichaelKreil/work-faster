@@ -52,12 +52,12 @@ import type { Compression, Format } from '../types.js';
  */
 export async function readDataFile(
 	filename: string,
-	options: { compression?: Compression; format: 'csv' | 'csv_fast' | 'tsv'; progress?: boolean }
+	options: { compression?: Compression; format: 'csv' | 'tsv'; progress?: boolean }
 ): Promise<AsyncIterable<object>>;
 
 export async function readDataFile(
 	filename: string,
-	options: { compression?: Compression; format: 'json'; progress?: boolean }
+	options: { compression?: Compression; format: 'ndjson'; progress?: boolean }
 ): Promise<AsyncIterable<unknown>>;
 
 export async function readDataFile(
@@ -100,10 +100,9 @@ export async function readDataFile(
 	// Parse the stream based on the specified format
 	switch (format) {
 		case 'csv':
-		case 'csv_fast':
 		case 'tsv':
 			return parser(format, stream); // Matches the first overload
-		case 'json':
+		case 'ndjson':
 			return parser(format, stream); // Matches the second overload
 		case 'lines':
 			return parser(format, stream); // Matches the third overload

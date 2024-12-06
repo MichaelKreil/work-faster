@@ -76,10 +76,10 @@ describe('readDataFile', () => {
 	});
 
 	it('should parse the stream based on format when format is specified', async () => {
-		const gen = await readDataFile('file.txt', { format: 'json' });
+		const gen = await readDataFile('file.txt', { format: 'ndjson' });
 		const result = await arrayFromAsync(gen);
 
-		expect(parser).toHaveBeenCalledWith('json', mockStream);
+		expect(parser).toHaveBeenCalledWith('ndjson', mockStream);
 		expect(result).toStrictEqual([{ parsed: 'line1' }, { parsed: 'line2' }]);
 	});
 
@@ -92,7 +92,7 @@ describe('readDataFile', () => {
 	});
 
 	it('should handle files with unknown format gracefully', async () => {
-		await expect(readDataFile('file.unknown', { format: 'unknown' as unknown as 'json' })).rejects.toThrow('Unsupported format: unknown');
+		await expect(readDataFile('file.unknown', { format: 'unknown' as unknown as 'ndjson' })).rejects.toThrow('Unsupported format: unknown');
 	});
 
 	it('should handle files with no compression', async () => {

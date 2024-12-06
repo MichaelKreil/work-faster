@@ -30,15 +30,14 @@ import { WFReadable } from '../classes.js';
  *   console.log(obj); // { key: 'value', ... }
  * }
  */
-export function parser(format: 'csv' | 'csv_fast' | 'tsv', stream: WFReadable<Buffer | string>): AsyncIterable<object>;
-export function parser(format: 'json', stream: WFReadable<Buffer | string>): AsyncIterable<unknown>;
+export function parser(format: 'csv' | 'tsv', stream: WFReadable<Buffer | string>): AsyncIterable<object>;
+export function parser(format: 'ndjson', stream: WFReadable<Buffer | string>): AsyncIterable<unknown>;
 export function parser(format: 'lines', stream: WFReadable<Buffer | string>): AsyncIterable<string>;
 export function parser(format: Format, stream: WFReadable<Buffer | string>): AsyncIterable<object | string | unknown> {
 	switch (format) {
-		case 'csv': return parseCSV(stream);
-		case 'csv_fast': return parseCSVFast(stream);
+		case 'csv': return parseCSVFast(stream);
 		case 'tsv': return parseCSVFast(stream, '\t');
-		case 'json': return parseNDJSON(stream);
+		case 'ndjson': return parseNDJSON(stream);
 		case 'lines': return asLines(stream);
 	}
 	throw new Error(`Unknown format: ${format}`);
@@ -94,7 +93,7 @@ async function* parseCSVFast(stream: WFReadable<Buffer | string>, separator: str
  *   console.log(row); // { header1: 'value1', header2: 'value2', ... }
  * }
  */
-async function* parseCSV(stream: WFReadable<Buffer | string>): AsyncIterable<object> {
+async function* _parseCSV(stream: WFReadable<Buffer | string>): AsyncIterable<object> {
 	const parser = wrapTransform<Buffer, object>(papa.parse(papa.NODE_STREAM_INPUT, { header: true }));
 	stream.pipe(parser);
 	for await (const entry of parser) {
