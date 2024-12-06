@@ -1,5 +1,5 @@
 import { flatten, fromValue, fromArray, toString, toBuffer, toArray, passThrough } from './utils.js';
-import { WFReadable } from './classes.js';
+import { WFReadable } from '../classes.js';
 import { Readable } from 'node:stream';
 
 describe('Utils Module', () => {

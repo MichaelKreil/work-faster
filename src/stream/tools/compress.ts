@@ -1,9 +1,9 @@
 import { createBrotliDecompress, createGunzip, createGzip, createBrotliCompress, constants } from 'node:zlib';
 import { spawn } from './spawn.js';
-import type { Compression } from './types.js';
+import type { Compression } from '../types.js';
 import { passThrough } from './utils.js';
 import { wrapTransform } from './wrapper.js';
-import { WFTransform } from './classes.js';
+import { WFTransform } from '../classes.js';
 
 export interface CompressOptions {
 	/**

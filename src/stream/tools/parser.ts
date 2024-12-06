@@ -1,8 +1,8 @@
 import { asLines } from './split.js';
 import papa from 'papaparse';
-import { Format } from './types.js';
+import { Format } from '../types.js';
 import { wrapTransform } from './wrapper.js';
-import { WFReadable } from './classes.js';
+import { WFReadable } from '../classes.js';
 
 /**
  * Parses the content of a stream based on the specified format.

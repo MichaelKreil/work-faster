@@ -1,5 +1,5 @@
 import { PassThrough, Readable, Transform } from 'node:stream';
-import { WFReadable, WFTransform } from './classes.js';
+import { WFReadable, WFTransform } from '../classes.js';
 import { wrapTransform } from './wrapper.js';
 
 /**

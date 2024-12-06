@@ -1,6 +1,6 @@
 import child_process from 'node:child_process';
 import { Transform } from 'node:stream';
-import { WFTransform } from './classes.js';
+import { WFTransform } from '../classes.js';
 
 export function spawn(command: string, args: string[]): Promise<WFTransform<Buffer, Buffer>> {
 	const cp = child_process.spawn(command, args, {

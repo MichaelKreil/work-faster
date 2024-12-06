@@ -1,8 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { ReadStream, WriteStream } from 'node:fs';
 import { Duplex, Readable, Transform, Writable } from 'node:stream';
-import { merge } from './merge.js';
-import { WFReadable, WFTransform, WFWritable } from './classes.js';
+import { WFReadable, WFTransform, WFWritable } from '../classes.js';
 
 
 export type WFReadSource<O = unknown> = Readable | Iterable<O> | AsyncIterable<O> | WFReadable<O>;

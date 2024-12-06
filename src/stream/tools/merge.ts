@@ -1,5 +1,5 @@
 import { Duplex, type Readable, type Writable } from 'node:stream';
-import { WFReadable, WFTransform, WFWritable } from './classes.js';
+import { WFReadable, WFTransform, WFWritable } from '../classes.js';
 
 // Overloads for `merge`
 export function merge<B, C>(a: WFReadable<B>, b: WFTransform<B, C>): WFReadable<C>;

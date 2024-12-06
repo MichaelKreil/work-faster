@@ -1,7 +1,7 @@
 import { asBuffer } from './conversion.js';
 import { wrapRead, wrapTransform } from './wrapper.js';
 import { arrayFromAsync } from './utils.js';
-import { WFTransform } from './classes.js';
+import { WFTransform } from '../classes.js';
 
 describe('asBuffer', () => {
 	const stringData = 'This is a test string';

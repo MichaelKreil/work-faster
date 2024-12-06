@@ -1,6 +1,6 @@
 import { arrayFromAsync, fromArray, fromValue } from './utils.js';
 import { asBuffer } from './conversion.js';
-import { WFReadable, WFTransform } from './classes.js';
+import { WFReadable, WFTransform } from '../classes.js';
 import { jest } from '@jest/globals';
 import { wrapTransform } from './wrapper.js';
 
@@ -21,7 +21,7 @@ jest.unstable_mockModule('./parser.js', () => ({
 jest.unstable_mockModule('./split.js', () => ({
 	asLines: jest.fn(),
 }));
-jest.unstable_mockModule('../utils/progress_bar.js', () => ({
+jest.unstable_mockModule('../../utils/progress_bar.js', () => ({
 	ProgressBar: jest.fn().mockImplementation(() => ({
 		update: jest.fn(),
 		close: jest.fn(),
@@ -33,7 +33,7 @@ const { read } = await import('./read.js');
 const { decompress } = await import('./compress.js');
 const { parser } = await import('./parser.js');
 const { asLines } = await import('./split.js');
-const { ProgressBar } = await import('../utils/progress_bar.js');
+const { ProgressBar } = await import('../../utils/progress_bar.js');
 const { readDataFile } = await import('./data_file.js');
 
 describe('readDataFile', () => {

@@ -1,8 +1,8 @@
-import { ProgressBar } from '../utils/progress_bar.js';
+import { ProgressBar } from '../../utils/progress_bar.js';
 import { read } from './read.js';
 import { decompress } from './compress.js';
 import { parser } from './parser.js';
-import type { Compression, Format } from './types.js';
+import type { Compression, Format } from '../types.js';
 
 /**
  * Reads a data file, optionally decompresses it, and parses it based on the specified format.

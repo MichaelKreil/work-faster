@@ -1,4 +1,4 @@
-import { WFReadable, WFTransform } from './classes.js';
+import { WFReadable, WFTransform } from '../classes.js';
 import type { WFReadSource as R, WFTransformSource as T, WFWriteSource as W } from './wrapper.js';
 import { wrapRead, wrapTransform, wrapWrite } from './wrapper.js';
 

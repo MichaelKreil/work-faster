@@ -1,5 +1,5 @@
 import { compress, decompress } from './compress.js';
-import { Compression } from './types.js';
+import { Compression } from '../types.js';
 import { fromValue, toBuffer } from './utils.js';
 
 describe('Compression and Decompression', () => {

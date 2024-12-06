@@ -1,5 +1,5 @@
-import { Duplex, Readable, Transform, Writable } from "stream";
-import { merge } from "./merge.js";
+import { Duplex, Readable, Transform, Writable } from 'node:stream';
+import { merge } from './tools/merge.js';
 
 export class WFReadable<O = unknown> {
 	readonly type = 'Readable';
