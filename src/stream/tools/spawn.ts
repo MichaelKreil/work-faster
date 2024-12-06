@@ -2,7 +2,7 @@ import child_process from 'node:child_process';
 import { Transform } from 'node:stream';
 import { WFTransform } from '../classes.js';
 
-export function spawn(command: string, args: string[]): Promise<WFTransform<Buffer, Buffer>> {
+export function spawn(command: string, args: string[]): WFTransform<Buffer, Buffer> {
 	const cp = child_process.spawn(command, args, {
 		stdio: ['pipe', 'pipe', 'pipe'], // Redirect stderr to allow error handling
 	});
@@ -51,12 +51,9 @@ export function spawn(command: string, args: string[]): Promise<WFTransform<Buff
 		emitErrorOnce(new Error(`Failed to write to stdin: ${err.message}`));
 	});
 
-	return new Promise((resolve, reject) => {
-		cp.on('spawn', () => resolve(new WFTransform(transformStream)))
+	cp.on('error', (err) => {
+		emitErrorOnce(new Error(`Failed to execute command "${[command, ...args].join(' ')}": ${err.message}`));
+	});
 
-		cp.on('error', (err) => {
-			hasEmittedError = true;
-			reject(new Error(`Failed to execute command: ${err.message}`));
-		});
-	})
+	return new WFTransform(transformStream);
 }
