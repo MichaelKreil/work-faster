@@ -74,6 +74,21 @@ export function wrapTransform<I, O>(inner: WFTransformSource<I, O>): WFTransform
 	throw Error('unknown transform');
 }
 
+export function wrapFilterTransform<I, O>(inner: ((item: I) => O | null) | ((item: I) => Promise<O | null>)): WFTransform<I, O> {
+	return new WFTransform(new Transform({
+		objectMode: true,
+		async transform(chunk, _encoding, callback) {
+			let result;
+			try {
+				result = await inner(chunk);
+			} catch (error) {
+				return callback(error instanceof Error ? error : Error(String(error)));
+			}
+			callback(null, result);
+		}
+	}));
+}
+
 
 
 // ### WRITE
