@@ -33,7 +33,7 @@ export interface CompressOptions {
  * const decompressStream = await decompress('gzip');
  * sourceStream.pipe(decompressStream).pipe(destinationStream);
  */
-export async function decompress(type: Compression): Promise<WFTransform<Buffer, Buffer>> {
+export function decompress(type: Compression): WFTransform<Buffer, Buffer> {
 	switch (type) {
 		case 'brotli': return wrapTransform(createBrotliDecompress());
 		case 'gzip': return wrapTransform(createGunzip());
@@ -69,7 +69,7 @@ export async function decompress(type: Compression): Promise<WFTransform<Buffer,
  * const compressStream = await compress('brotli', { level: 9 });
  * sourceStream.pipe(compressStream).pipe(destinationStream);
  */
-export async function compress(type: Compression, options: CompressOptions = {}): Promise<WFTransform<Buffer, Buffer>> {
+export function compress(type: Compression, options: CompressOptions = {}): WFTransform<Buffer, Buffer> {
 	const { level } = options;
 
 	switch (type) {

@@ -69,11 +69,11 @@ describe('Compression and Decompression', () => {
 	});
 
 	it('should throw an error for unsupported compression types during compression', async () => {
-		await expect(compress('unsupported' as unknown as Compression)).rejects.toThrow('Unsupported compression type: unsupported');
+		await expect(() => compress('unsupported' as unknown as Compression)).toThrow('Unsupported compression type: unsupported');
 	});
 
 	it('should throw an error for unsupported compression types during decompression', async () => {
-		await expect(decompress('unsupported' as unknown as Compression)).rejects.toThrow('Unsupported compression type: unsupported');
+		await expect(() => decompress('unsupported' as unknown as Compression)).toThrow('Unsupported compression type: unsupported');
 	});
 
 	describe('should handle empty input correctly', () => {
