@@ -6,6 +6,7 @@ export * from './parser.js';
 export * from './pipeline.js';
 export * from './read.js';
 export * from './spawn.js';
+export * from './skip.js';
 export * from './split.js';
 export * from './utils.js';
 export * from './wrapper.js';
