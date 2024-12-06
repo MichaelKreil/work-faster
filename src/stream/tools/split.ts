@@ -4,7 +4,20 @@ import { WFReadable, WFTransform } from '../classes.js';
 
 const MAX_BUFFER_SIZE = 16 * 1024 * 1024; // 16 MB
 
-export function split(matcher: string | RegExp = /\r?\n/, format: BufferEncoding = 'utf8'): WFTransform<Buffer, string> {
+export function split(delimiter: number | string | RegExp = '\n', format: BufferEncoding = 'utf8'): WFTransform<Buffer, string> {
+	if (delimiter == null) return splitFast();
+	if ((typeof delimiter == 'string') && (delimiter.length == 1) && (delimiter.charCodeAt(0) < 127)) {
+		return splitFast(delimiter.charCodeAt(0));
+	}
+	if (typeof delimiter == 'number') {
+		if (delimiter >= 127) throw Error('numeric matcher must be < 127');
+		return splitFast(delimiter);
+	}
+	return splitSlow(delimiter, format);
+}
+
+
+function splitSlow(matcher: string | RegExp = '\n', format: BufferEncoding = 'utf8'): WFTransform<Buffer, string> {
 	let last = '';
 	const decoder = new StringDecoder(format);
 
@@ -24,6 +37,7 @@ export function split(matcher: string | RegExp = /\r?\n/, format: BufferEncoding
 			cb();
 		}
 	}))
+
 }
 
 export function splitFast(code: number = 10): WFTransform<Buffer, string> {
