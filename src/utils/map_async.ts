@@ -1,7 +1,7 @@
 import { forEachAsync } from './for_each_async.js';
 
 export async function mapAsync<I, O>(
-	items: Iterable<I> | AsyncIterable<I> | Iterator<I> | AsyncIterator<I>,
+	items: Iterable<I> | AsyncIterable<I> | Iterator<I> | AsyncIterator<I> | IterableIterator<I>,
 	callback: (item: I, index: number) => Promise<O>,
 	maxParallel?: number
 ): Promise<O[]> {

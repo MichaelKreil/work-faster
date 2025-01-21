@@ -1,7 +1,7 @@
 import os from 'node:os';
 
 export function forEachAsync<I>(
-	items: Iterable<I> | AsyncIterable<I> | Iterator<I> | AsyncIterator<I>,
+	items: Iterable<I> | AsyncIterable<I> | Iterator<I> | AsyncIterator<I> | IterableIterator<I>,
 	callback: (item: I, index: number) => Promise<void>,
 	maxParallel?: number
 ): Promise<void> {
