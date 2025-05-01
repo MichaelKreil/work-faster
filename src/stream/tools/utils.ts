@@ -64,7 +64,10 @@ export async function toString<I>(stream: WFReadable<Buffer | string> | WFTransf
  */
 export async function toBuffer<I>(stream: WFReadable<Buffer | string> | WFTransform<I, Buffer | string>): Promise<Buffer> {
 	const chunks: Buffer[] = [];
-	for await (const chunk of stream) chunks.push(Buffer.from(chunk));
+	for await (let chunk of stream) {
+		if (!Buffer.isBuffer(chunk)) chunk = Buffer.from(chunk);
+		chunks.push(chunk);
+	}
 	return Buffer.concat(chunks);
 }
 
