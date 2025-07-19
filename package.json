@@ -8,8 +8,8 @@
     "lint": "eslint . --color",
     "prepack": "npm run build",
     "release": "npx vrt release-npm",
-    "test-coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "test-coverage": "NODE_OPTIONS=\"--experimental-vm-modules\" npx jest --coverage",
+    "test": "NODE_OPTIONS=\"--experimental-vm-modules\" npx jest",
     "upgrade": "npm-check-updates -u && rm -f package-lock.json; rm -rf node_modules; npm i"
   },
   "main": "dist/index.js",
