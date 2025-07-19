@@ -1,6 +1,6 @@
-import { createReadStream, statSync } from 'node:fs';
-import http from 'node:http';
-import https from 'node:https';
+import { createReadStream, statSync } from 'fs';
+import http from 'http';
+import https from 'https';
 import { WFReadable } from '../classes.js';
 
 /**

@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals';
-import { IncomingMessage } from 'node:http';
-import { Readable } from 'node:stream';
+import { IncomingMessage } from 'http';
+import { Readable } from 'stream';
 import { toString } from './utils.js';
 
 const createReadStream = jest.fn();
@@ -9,9 +9,9 @@ const httpRequest = jest.fn((_url, _cb: (res: IncomingMessage) => void) => { });
 const httpsRequest = jest.fn((_url, _cb: (res: IncomingMessage) => void) => { });
 
 // Mock `fs`, `http`, and `https` modules before importing `read`
-jest.unstable_mockModule('node:fs', () => ({ createReadStream, statSync }));
-jest.unstable_mockModule('node:http', () => ({ default: { request: httpRequest } }));
-jest.unstable_mockModule('node:https', () => ({ default: { request: httpsRequest } }));
+jest.unstable_mockModule('fs', () => ({ createReadStream, statSync }));
+jest.unstable_mockModule('http', () => ({ default: { request: httpRequest } }));
+jest.unstable_mockModule('https', () => ({ default: { request: httpsRequest } }));
 
 // Now import the `read` function with the mocks applied
 const { read } = await import('./read.js');
