@@ -1,6 +1,6 @@
 {
   "name": "work-faster",
-  "version": "2.5.3",
+  "version": "2.5.4",
   "description": "same as array.forEach, but in parallel",
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.build.json",
