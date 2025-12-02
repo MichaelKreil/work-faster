@@ -1,6 +1,6 @@
 {
   "name": "work-faster",
-  "version": "2.5.3",
+  "version": "2.5.4",
   "description": "same as array.forEach, but in parallel",
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.build.json",
@@ -28,19 +28,19 @@
   "dependencies": {},
   "devDependencies": {
     "@types/jest": "^30.0.0",
-    "@types/node": "^24.9.2",
-    "@types/papaparse": "^5.3.16",
-    "@typescript-eslint/eslint-plugin": "^8.46.2",
-    "@typescript-eslint/parser": "^8.46.2",
-    "@versatiles/release-tool": "^2.4.4",
-    "eslint": "^9.39.0",
+    "@types/node": "^24.10.1",
+    "@types/papaparse": "^5.5.1",
+    "@typescript-eslint/eslint-plugin": "^8.48.1",
+    "@typescript-eslint/parser": "^8.48.1",
+    "@versatiles/release-tool": "^2.4.5",
+    "eslint": "^9.39.1",
     "jest": "^30.2.0",
     "npm-check-updates": "^19.1.2",
-    "ts-jest": "^29.4.5",
+    "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
-    "tsx": "^4.20.6",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.46.2"
+    "typescript-eslint": "^8.48.1"
   },
   "engines": {
     "node": ">=20.0.0"
