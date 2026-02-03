@@ -1,5 +1,11 @@
 import os from 'node:os';
 
+/**
+ * Iterates over items in parallel, invoking a callback for each item.
+ * @param items - The items to iterate over (array, iterable, or async iterable)
+ * @param callback - Async function called for each item with the item and its index
+ * @param maxParallel - Maximum concurrent operations (defaults to CPU count)
+ */
 export function forEachAsync<I>(
 	items: Iterable<I> | AsyncIterable<I> | Iterator<I> | AsyncIterator<I> | IterableIterator<I>,
 	callback: (item: I, index: number) => Promise<void>,

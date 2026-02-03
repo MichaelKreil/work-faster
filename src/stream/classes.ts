@@ -1,6 +1,9 @@
 import { Duplex, Readable, Transform, Writable } from 'node:stream';
 import { merge } from './tools/merge.js';
 
+/**
+ * Wrapper around Node.js Readable stream with typed output and chainable pipe/merge methods.
+ */
 export class WFReadable<O = unknown> {
 	readonly type = 'Readable';
 	inner: Readable;
@@ -30,6 +33,9 @@ export class WFReadable<O = unknown> {
 	}
 }
 
+/**
+ * Wrapper around Node.js Duplex/Transform stream with typed input/output and chainable methods.
+ */
 export class WFTransform<I = unknown, O = I> {
 	readonly type = 'Transform';
 	inner: Duplex;
@@ -82,6 +88,9 @@ export class WFTransform<I = unknown, O = I> {
 	}
 }
 
+/**
+ * Wrapper around Node.js Writable stream with typed input and backpressure-aware write method.
+ */
 export class WFWritable<_I = unknown> {
 	readonly type = 'Writable';
 	inner: Writable;

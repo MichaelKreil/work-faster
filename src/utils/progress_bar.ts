@@ -1,5 +1,9 @@
 type ProgressState = { index: number; time: number };
 
+/**
+ * Displays a progress bar in the terminal with speed and ETA estimates.
+ * Updates are throttled to avoid excessive terminal writes.
+ */
 export class ProgressBar {
 	private readonly MAX_STATES = 30;
 	private index = 0;
