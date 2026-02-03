@@ -8,7 +8,7 @@ describe('merge function', () => {
 		const array: T[] = [];
 		const writable = wrapWrite((item: T) => array.push(item));
 		return { writable, array };
-	};
+	}
 
 	it('Readable + Transform = Readable', async () => {
 		const readable = fromArray([1, 2, 3]);
@@ -24,7 +24,7 @@ describe('merge function', () => {
 		const { writable, array } = createWritable<string>();
 
 		const mergedWritable = merge(transform, writable);
-		await pipeline(fromArray([1, 2, 3]), mergedWritable)
+		await pipeline(fromArray([1, 2, 3]), mergedWritable);
 
 		expect(array).toEqual(['11', '12', '13']);
 	});
@@ -63,8 +63,6 @@ describe('merge function', () => {
 		const mergedWritable = merge(transform, writable);
 		fromValue(10).pipe(mergedWritable);
 
-		await expect(
-			new Promise((_, reject) => mergedWritable.inner.on('error', reject))
-		).rejects.toThrow('Test error');
+		await expect(new Promise((_, reject) => mergedWritable.inner.on('error', reject))).rejects.toThrow('Test error');
 	});
 });

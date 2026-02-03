@@ -18,12 +18,12 @@ export function spawn(command: string, args: string[]): WFTransform<Buffer, Buff
 		flush(cb) {
 			cp.stdin.end();
 			cp.once('close', () => cb());
-		}
+		},
 	});
 
 	// Pipe stdout to the transform stream output
 	cp.stdout.on('data', (data) => {
-		transformStream.push(data)
+		transformStream.push(data);
 	});
 
 	// Function to emit an error if it hasn't been emitted yet

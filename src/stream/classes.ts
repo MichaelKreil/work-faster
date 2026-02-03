@@ -27,7 +27,7 @@ export class WFReadable<O = unknown> {
 	}
 
 	[Symbol.asyncIterator](): AsyncIterator<O> {
-		return this.inner[Symbol.asyncIterator]()
+		return this.inner[Symbol.asyncIterator]();
 	}
 }
 
@@ -42,9 +42,7 @@ export class WFTransform<I = unknown, O = I> {
 	pipe<T>(destination: WFTransform<O, T>): WFTransform<O, T>;
 	pipe(destination: WFWritable<O>): WFWritable<O>;
 	pipe<T>(destination: Duplex | Transform): WFTransform<O, T>;
-	pipe<T>(
-		destination: WFTransform<O, T> | WFWritable<O> | Duplex | Transform
-	): WFTransform<O, T> | WFWritable<O> {
+	pipe<T>(destination: WFTransform<O, T> | WFWritable<O> | Duplex | Transform): WFTransform<O, T> | WFWritable<O> {
 		if (destination instanceof Duplex) {
 			this.inner.pipe(destination);
 			return new WFTransform(destination);
@@ -60,18 +58,18 @@ export class WFTransform<I = unknown, O = I> {
 	}
 
 	[Symbol.asyncIterator](): AsyncIterator<O> {
-		return this.inner[Symbol.asyncIterator]()
+		return this.inner[Symbol.asyncIterator]();
 	}
 
 	// Write method that respects backpressure
 	write(content: Buffer): Promise<void> {
-		return new Promise(r => {
+		return new Promise((r) => {
 			if (!this.inner.write(content)) {
 				this.inner.once('drain', r);
 			} else {
 				r();
 			}
-		})
+		});
 	}
 
 	// End method that finalizes the stream
@@ -85,7 +83,6 @@ export class WFTransform<I = unknown, O = I> {
 	}
 }
 
-
 export class WFWritable<_I = unknown> {
 	readonly type = 'Writable';
 	inner: Writable;
@@ -96,13 +93,13 @@ export class WFWritable<_I = unknown> {
 
 	// Write method that respects backpressure
 	write(content: Buffer): Promise<void> {
-		return new Promise(r => {
+		return new Promise((r) => {
 			if (!this.inner.write(content)) {
 				this.inner.once('drain', r);
 			} else {
 				r();
 			}
-		})
+		});
 	}
 
 	// End method that finalizes the stream

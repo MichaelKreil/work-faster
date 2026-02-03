@@ -5,13 +5,19 @@ import { WFReadable, WFTransform, WFWritable } from '../classes.js';
 export function merge<B, C>(a: WFReadable<B>, b: WFTransform<B, C>): WFReadable<C>;
 export function merge<A, B>(a: WFTransform<A, B>, b: WFWritable<B>): WFWritable<A>;
 export function merge<A, B, C>(a: WFTransform<A, B>, b: WFTransform<B, C>): WFTransform<A, C>;
-export function merge<A, B, C>(a: WFTransform<A, B>, b: WFTransform<B, C> | WFWritable<B>): WFWritable<A> | WFTransform<A, C>;
-export function merge<A, B, C>(a: WFReadable<B> | WFTransform<A, B>, b: WFTransform<B, C> | WFWritable<B>): WFReadable<C> | WFWritable<A> | WFTransform<A, C>;
+export function merge<A, B, C>(
+	a: WFTransform<A, B>,
+	b: WFTransform<B, C> | WFWritable<B>,
+): WFWritable<A> | WFTransform<A, C>;
+export function merge<A, B, C>(
+	a: WFReadable<B> | WFTransform<A, B>,
+	b: WFTransform<B, C> | WFWritable<B>,
+): WFReadable<C> | WFWritable<A> | WFTransform<A, C>;
 
 // Main function implementation
 export function merge<A, B, C>(
 	a: WFReadable<B> | WFTransform<A, B>,
-	b: WFTransform<B, C> | WFWritable<B>
+	b: WFTransform<B, C> | WFWritable<B>,
 ): WFReadable<C> | WFWritable<A> | WFTransform<A, C> {
 	// Case 1: Merging a WFReadable with a WFTransform to produce a WFReadable
 	if (a instanceof WFReadable && b instanceof WFTransform) {
@@ -33,17 +39,12 @@ export function merge<A, B, C>(
 	throw new Error('Invalid combination of streams for merge.');
 }
 
-
-
 class DuplexWrapper extends Duplex {
 	private _writable: Writable;
 	private _readable: Readable;
 	private _waiting: boolean;
 
-	constructor(
-		writable: Writable,
-		readable: Readable
-	) {
+	constructor(writable: Writable, readable: Readable) {
 		super({
 			writableObjectMode: writable.writableObjectMode,
 			readableObjectMode: readable.readableObjectMode,
@@ -73,7 +74,8 @@ class DuplexWrapper extends Duplex {
 	}
 
 	_read() {
-		let buf, reads = 0;
+		let buf,
+			reads = 0;
 		while ((buf = this._readable.read()) !== null) {
 			this.push(buf);
 			reads++;

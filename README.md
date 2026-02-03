@@ -5,20 +5,19 @@
 
 - [Overview](#overview)
 - [Main Components](#main-components)
-	- [class: `ProgressBar`](#class-progressbar)
-	- [function: `forEachAsync`](#function-foreachasync)
+  - [class: `ProgressBar`](#class-progressbar)
+  - [function: `forEachAsync`](#function-foreachasync)
 - [Stream Namespace](#stream-namespace)
-	- [class: `WFReadable`](#class-wfreadable)
-	- [class: `WFTransform`](#class-wftransform)
-	- [class: `WFWritable`](#class-wfwritable)
-	- [function: `compress`](#function-compress)
-	- [function: `decompress`](#function-decompress)
-	- [functions: Utilities](#functions-utilities)
-	- [functions: Stream Processing](#functions-stream-processing)
-	- [functions: File and Line Utilities](#functions-file-and-line-utilities)
+  - [class: `WFReadable`](#class-wfreadable)
+  - [class: `WFTransform`](#class-wftransform)
+  - [class: `WFWritable`](#class-wfwritable)
+  - [function: `compress`](#function-compress)
+  - [function: `decompress`](#function-decompress)
+  - [functions: Utilities](#functions-utilities)
+  - [functions: Stream Processing](#functions-stream-processing)
+  - [functions: File and Line Utilities](#functions-file-and-line-utilities)
 - [Installation](#installation)
 - [Usage Examples](#usage-examples)
-
 
 # Overview
 
@@ -29,6 +28,7 @@
 # Main Components
 
 ## class: `ProgressBar`
+
 A progress indicator for tracking and displaying task completion over time.
 
 - **Constructor**: `new ProgressBar(total, timeStep?)`
@@ -39,8 +39,8 @@ A progress indicator for tracking and displaying task completion over time.
   - `update(value)`: Updates the progress directly to a specific `value`.
   - `close()`: Closes and finalizes the progress bar display.
 
-
 ## function: `forEachAsync`
+
 Executes an asynchronous callback function over items with an optional parallel limit.
 
 - **Parameters**:
@@ -52,6 +52,7 @@ Executes an asynchronous callback function over items with an optional parallel 
 # Stream Namespace
 
 ## class: `WFReadable`
+
 A custom readable stream wrapper.
 
 - **Constructor**: `new WFReadable(inner: Readable)`
@@ -62,6 +63,7 @@ A custom readable stream wrapper.
   - `[Symbol.asyncIterator]`: Iterates over the stream asynchronously.
 
 ## class: `WFTransform`
+
 A custom duplex transform stream wrapper.
 
 - **Constructor**: `new WFTransform(inner: Duplex)`
@@ -71,12 +73,14 @@ A custom duplex transform stream wrapper.
   - `merge(destination)`: Merges data from another transform stream.
 
 ## class: `WFWritable`
+
 A custom writable stream wrapper.
 
 - **Constructor**: `new WFWritable(inner: Writable)`
   - `inner`: The writable stream.
 
 ## function: `compress`
+
 Compresses data based on the specified type and options.
 
 - **Parameters**:
@@ -85,6 +89,7 @@ Compresses data based on the specified type and options.
 - **Returns**: A `WFTransform` stream for compression.
 
 ## function: `decompress`
+
 Decompresses data based on the specified type.
 
 - **Parameters**:
@@ -125,9 +130,7 @@ npm install work-faster
 ```javascript
 import { forEachAsync } from 'work-faster';
 
-await forEachAsync([1, 2, 3], async (item) => {
-  console.log(item);
-}, 2);
+await forEachAsync([1, 2, 3], async (item) => console.log(item), 2);
 ```
 
 **Compressing and Decompressing Data**

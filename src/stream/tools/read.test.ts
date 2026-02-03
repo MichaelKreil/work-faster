@@ -5,8 +5,8 @@ import { toString } from './utils.js';
 
 const createReadStream = vi.fn();
 const statSync = vi.fn();
-const httpRequest = vi.fn((_url, _cb: (res: IncomingMessage) => void) => { });
-const httpsRequest = vi.fn((_url, _cb: (res: IncomingMessage) => void) => { });
+const httpRequest = vi.fn((_url, _cb: (res: IncomingMessage) => void) => {});
+const httpsRequest = vi.fn((_url, _cb: (res: IncomingMessage) => void) => {});
 
 // Mock `fs`, `http`, and `https` modules before importing `read`
 vi.mock('fs', () => ({ createReadStream, statSync }));

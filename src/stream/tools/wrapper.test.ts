@@ -5,7 +5,6 @@ import { fromArray, toArray, toString } from './utils.js';
 import { describe, it, expect, vi } from 'vitest';
 
 describe('Stream Wrapper Functions', () => {
-
 	// Test data
 	const testData = Buffer.from('test data');
 
@@ -46,15 +45,16 @@ describe('Stream Wrapper Functions', () => {
 			expect(wrapWrite(new Writable())).toBeInstanceOf(WFWritable);
 		});
 
-		it('should wrap a function into WFWritable', () => new Promise<void>(done => {
-			const writeFunc = vi.fn();
-			const wrappedFuncWrite = wrapWrite(writeFunc);
-			expect(wrappedFuncWrite).toBeInstanceOf(WFWritable);
-			wrappedFuncWrite.inner.write(testData, () => {
-				expect(writeFunc).toHaveBeenCalledWith(testData);
-				done();
-			});
-		}));
+		it('should wrap a function into WFWritable', () =>
+			new Promise<void>((done) => {
+				const writeFunc = vi.fn();
+				const wrappedFuncWrite = wrapWrite(writeFunc);
+				expect(wrappedFuncWrite).toBeInstanceOf(WFWritable);
+				wrappedFuncWrite.inner.write(testData, () => {
+					expect(writeFunc).toHaveBeenCalledWith(testData);
+					done();
+				});
+			}));
 	});
 
 	describe('WFReadable Class', () => {
@@ -76,7 +76,7 @@ describe('Stream Wrapper Functions', () => {
 
 		it('should respect backpressure in write method', async () => {
 			// Simulates backpressure
-			const wfTransform = wrapTransform(chunk => new Promise(r => setTimeout(() => r(chunk), 10)));
+			const wfTransform = wrapTransform((chunk) => new Promise((r) => setTimeout(() => r(chunk), 10)));
 			for (let i = 0; i < wfTransform.inner.writableHighWaterMark; i++) wfTransform.write(testData);
 			expect(wfTransform.inner.write(testData)).toBe(false); // write returns false, indicating backpressure
 		});
@@ -92,19 +92,20 @@ describe('Stream Wrapper Functions', () => {
 	});
 
 	describe('WFWritable Class', () => {
-		it('should write data as expected', () => new Promise<void>(done => {
-			const writeFunc = vi.fn();
-			const wfWritable = wrapWrite(writeFunc);
+		it('should write data as expected', () =>
+			new Promise<void>((done) => {
+				const writeFunc = vi.fn();
+				const wfWritable = wrapWrite(writeFunc);
 
-			wfWritable.inner.write(testData, () => {
-				expect(writeFunc).toHaveBeenCalledWith(testData);
-				done();
-			});
-		}));
+				wfWritable.inner.write(testData, () => {
+					expect(writeFunc).toHaveBeenCalledWith(testData);
+					done();
+				});
+			}));
 
 		it('should respect backpressure in write method', async () => {
 			// Simulates backpressure
-			const wfWritable = wrapWrite(() => new Promise(r => setTimeout(() => r(), 10)));
+			const wfWritable = wrapWrite(() => new Promise((r) => setTimeout(() => r(), 10)));
 			for (let i = 0; i < wfWritable.inner.writableHighWaterMark; i++) wfWritable.write(testData);
 			expect(wfWritable.inner.write(testData)).toBe(false); // write returns false, indicating backpressure
 		});

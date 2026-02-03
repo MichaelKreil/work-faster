@@ -3,16 +3,18 @@ import { Compression } from '../types.js';
 import { fromValue, toBuffer } from './utils.js';
 
 describe('Compression and Decompression', () => {
-	const longString = Buffer.from('This is a long string that we will use to test the compression and decompression functionality. '.repeat(3));
+	const longString = Buffer.from(
+		'This is a long string that we will use to test the compression and decompression functionality. '.repeat(3),
+	);
 	const noise = Buffer.from(Int8Array.from({ length: 2000 }, (v, k) => 125 * Math.cos(k / 10)).buffer);
 	const buffer = Buffer.concat([longString, noise, longString]);
 
-	const algorithms: { name: Compression, hexStart: string, hexEnd: string }[] = [
+	const algorithms: { name: Compression; hexStart: string; hexEnd: string }[] = [
 		{ name: 'gzip', hexStart: '1f8b0800', hexEnd: '100a0000' },
 		{ name: 'brotli', hexStart: '1b0f0a00', hexEnd: '' },
 		{ name: 'lz4', hexStart: '04224d18', hexEnd: '' },
 		{ name: 'zstd', hexStart: '28b52ffd', hexEnd: '' },
-		{ name: 'none', hexStart: '', hexEnd: '' }
+		{ name: 'none', hexStart: '', hexEnd: '' },
 	];
 
 	describe('should correctly compress and decompress', () => {
@@ -35,7 +37,7 @@ describe('Compression and Decompression', () => {
 				expect(decompressedBuffer).toEqual(buffer);
 			});
 		}
-	})
+	});
 
 	describe('level 9 should be smaller than level 1', () => {
 		for (const { name } of algorithms) {
@@ -51,8 +53,7 @@ describe('Compression and Decompression', () => {
 				expect(compressedLevel9.length).toBeLessThan(compressedLevel1.length);
 			});
 		}
-	})
-
+	});
 
 	it('should handle "none" compression by returning the original buffer', async () => {
 		// Compress with 'none'
@@ -69,11 +70,15 @@ describe('Compression and Decompression', () => {
 	});
 
 	it('should throw an error for unsupported compression types during compression', async () => {
-		await expect(() => compress('unsupported' as unknown as Compression)).toThrow('Unsupported compression type: unsupported');
+		await expect(() => compress('unsupported' as unknown as Compression)).toThrow(
+			'Unsupported compression type: unsupported',
+		);
 	});
 
 	it('should throw an error for unsupported compression types during decompression', async () => {
-		await expect(() => decompress('unsupported' as unknown as Compression)).toThrow('Unsupported compression type: unsupported');
+		await expect(() => decompress('unsupported' as unknown as Compression)).toThrow(
+			'Unsupported compression type: unsupported',
+		);
 	});
 
 	describe('should handle empty input correctly', () => {
@@ -87,7 +92,7 @@ describe('Compression and Decompression', () => {
 
 				// Validate that decompression returns an empty buffer
 				expect(decompressedBuffer).toEqual(emptyBuffer);
-			})
+			});
 		}
 	});
 
@@ -103,5 +108,5 @@ describe('Compression and Decompression', () => {
 				expect(decompressedBuffer.compare(largeBuffer)).toBe(0);
 			});
 		}
-	})
+	});
 });

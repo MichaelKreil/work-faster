@@ -3,7 +3,7 @@ import os from 'node:os';
 export function forEachAsync<I>(
 	items: Iterable<I> | AsyncIterable<I> | Iterator<I> | AsyncIterator<I> | IterableIterator<I>,
 	callback: (item: I, index: number) => Promise<void>,
-	maxParallel?: number
+	maxParallel?: number,
 ): Promise<void> {
 	const concurrency = maxParallel ?? os.cpus().length;
 	let index = 0;
@@ -59,7 +59,7 @@ export function forEachAsync<I>(
 }
 
 function getIterator<V>(
-	iterator: Iterable<V> | AsyncIterable<V> | Iterator<V> | AsyncIterator<V>
+	iterator: Iterable<V> | AsyncIterable<V> | Iterator<V> | AsyncIterator<V>,
 ): AsyncIterator<V> | Iterator<V> {
 	if (Symbol.asyncIterator in iterator) return iterator[Symbol.asyncIterator]();
 	if (Symbol.iterator in iterator) return iterator[Symbol.iterator]();

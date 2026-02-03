@@ -7,7 +7,8 @@ import { WFReadable } from '../classes.js';
  * Reads a file from a local path or URL and returns a readable stream and its size.
  */
 export async function read(filename: string): Promise<{ stream: WFReadable<Buffer>; size: number }> {
-	let stream, size: number = 0;
+	let stream,
+		size: number = 0;
 
 	if (filename.startsWith('http://')) {
 		stream = await getHttpStream(http, filename);

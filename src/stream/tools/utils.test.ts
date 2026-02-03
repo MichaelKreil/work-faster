@@ -3,7 +3,6 @@ import { WFReadable } from '../classes.js';
 import { Readable } from 'node:stream';
 
 describe('Utils Module', () => {
-
 	describe('fromValue', () => {
 		it('should create a WFReadable from a single value', async () => {
 			const input = 'test value';
@@ -113,7 +112,10 @@ describe('Utils Module', () => {
 
 	describe('flatten', () => {
 		it('should flatten a stream of arrays of objects into individual objects', async () => {
-			const input = [[{ id: 1 }, { id: 2 }], [{ id: 3 }, { id: 4 }]];
+			const input = [
+				[{ id: 1 }, { id: 2 }],
+				[{ id: 3 }, { id: 4 }],
+			];
 			const readable = fromArray(input);
 			const flattened = readable.pipe(flatten());
 
@@ -151,7 +153,6 @@ describe('Utils Module', () => {
 			const flattened = readable.pipe(flatten());
 			expect(await toArray(flattened)).toEqual([]);
 		});
-
 	});
 
 	describe('passThrough', () => {
@@ -172,11 +173,13 @@ describe('Utils Module', () => {
 
 	describe('Stream Errors', () => {
 		it('should propagate errors through the stream', async () => {
-			const readable = new WFReadable(new Readable({
-				read() {
-					this.emit('error', new Error('Stream error'));
-				}
-			}));
+			const readable = new WFReadable(
+				new Readable({
+					read() {
+						this.emit('error', new Error('Stream error'));
+					},
+				}),
+			);
 			await expect(toArray(readable)).rejects.toThrow('Stream error');
 		});
 	});
