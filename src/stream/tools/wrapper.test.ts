@@ -2,7 +2,7 @@ import { wrap, wrapRead, wrapTransform, wrapWrite } from './wrapper.js';
 import { WFReadable, WFTransform, WFWritable } from '../classes.js';
 import { Readable, Writable, Transform } from 'node:stream';
 import { fromArray, toArray, toString } from './utils.js';
-import { jest } from '@jest/globals';
+import { describe, it, expect, vi } from 'vitest';
 
 describe('Stream Wrapper Functions', () => {
 
@@ -46,15 +46,15 @@ describe('Stream Wrapper Functions', () => {
 			expect(wrapWrite(new Writable())).toBeInstanceOf(WFWritable);
 		});
 
-		it('should wrap a function into WFWritable', done => {
-			const writeFunc = jest.fn();
+		it('should wrap a function into WFWritable', () => new Promise<void>(done => {
+			const writeFunc = vi.fn();
 			const wrappedFuncWrite = wrapWrite(writeFunc);
 			expect(wrappedFuncWrite).toBeInstanceOf(WFWritable);
 			wrappedFuncWrite.inner.write(testData, () => {
 				expect(writeFunc).toHaveBeenCalledWith(testData);
 				done();
 			});
-		});
+		}));
 	});
 
 	describe('WFReadable Class', () => {
@@ -92,15 +92,15 @@ describe('Stream Wrapper Functions', () => {
 	});
 
 	describe('WFWritable Class', () => {
-		it('should write data as expected', done => {
-			const writeFunc = jest.fn();
+		it('should write data as expected', () => new Promise<void>(done => {
+			const writeFunc = vi.fn();
 			const wfWritable = wrapWrite(writeFunc);
 
 			wfWritable.inner.write(testData, () => {
 				expect(writeFunc).toHaveBeenCalledWith(testData);
 				done();
 			});
-		});
+		}));
 
 		it('should respect backpressure in write method', async () => {
 			// Simulates backpressure

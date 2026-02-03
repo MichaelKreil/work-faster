@@ -49,7 +49,7 @@ describe('parser', () => {
 		});
 
 		it('should throw an error for invalid JSON', async () => {
-			expect(process('{"name":"Alice","age":30}\n{"name":"Bob",age:25}\n', parser('ndjson'))).rejects.toThrow();
+			await expect(process('{"name":"Alice","age":30}\n{"name":"Bob",age:25}\n', parser('ndjson'))).rejects.toThrow();
 		});
 	});
 

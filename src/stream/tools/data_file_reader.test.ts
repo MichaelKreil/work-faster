@@ -1,16 +1,16 @@
 import { fromValue, toArray, toBuffer } from './utils.js';
-import { jest } from '@jest/globals';
+import { describe, it, expect, vi } from 'vitest';
 import { Compression, Format } from '../types.js';
 import { compress } from './compress.js';
 
-// Mock dependencies with unstable_mockModule
-jest.unstable_mockModule('./read.js', () => ({
-	read: jest.fn(),
+// Mock dependencies
+vi.mock('./read.js', () => ({
+	read: vi.fn(),
 }));
-jest.unstable_mockModule('../../utils/progress_bar.js', () => ({
-	ProgressBar: jest.fn().mockImplementation(() => ({
-		update: jest.fn(),
-		close: jest.fn(),
+vi.mock('../../utils/progress_bar.js', () => ({
+	ProgressBar: vi.fn().mockImplementation(() => ({
+		update: vi.fn(),
+		close: vi.fn(),
 	})),
 }));
 
@@ -38,7 +38,7 @@ describe('readDataFile', () => {
 	];
 
 	async function mockSource(content: string, compression: Compression = 'none') {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
 		const key = compression + '/' + content;
 		let buffer: Buffer;
@@ -53,7 +53,7 @@ describe('readDataFile', () => {
 		const stream = fromValue(buffer);
 
 		// Mock `read` to return a Promise with a mock stream and size
-		jest.mocked(read).mockResolvedValue({ stream, size: buffer.length });
+		vi.mocked(read).mockResolvedValue({ stream, size: buffer.length });
 	};
 
 	describe('should parse compressed and formatted files correctly', () => {
