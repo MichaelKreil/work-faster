@@ -20,7 +20,6 @@ export class WFReadable<O = unknown> {
 		return destination;
 	}
 
-	merge<T>(destination: WFTransform<O, T>): WFReadable<T>;
 	merge<T>(destination: WFTransform<O, T>): WFReadable<T> {
 		this.pipe(destination);
 		return new WFReadable(destination.inner);
