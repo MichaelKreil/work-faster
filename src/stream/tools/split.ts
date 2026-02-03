@@ -2,7 +2,9 @@ import { Transform } from 'node:stream';
 import { StringDecoder } from 'node:string_decoder';
 import { WFReadable, WFTransform } from '../classes.js';
 
-const MAX_BUFFER_SIZE = 16 * 1024 * 1024; // 16 MB
+// Buffer size threshold before processing accumulated chunks.
+// 16 MB balances memory usage with processing efficiency.
+const MAX_BUFFER_SIZE = 16 * 1024 * 1024;
 
 export function split(
 	delimiter: number | string | RegExp = '\n',

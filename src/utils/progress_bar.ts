@@ -5,6 +5,8 @@ type ProgressState = { index: number; time: number };
  * Updates are throttled to avoid excessive terminal writes.
  */
 export class ProgressBar {
+	// Number of previous states kept for calculating speed averages.
+	// 30 samples provides smooth speed estimation over recent history.
 	private readonly MAX_STATES = 30;
 	private index = 0;
 	private nextUpdateTime: number;
