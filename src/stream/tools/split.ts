@@ -13,7 +13,7 @@ export function split(
 		return splitFast(delimiter.charCodeAt(0));
 	}
 	if (typeof delimiter == 'number') {
-		if (delimiter >= 127) throw Error('numeric matcher must be < 127');
+		if (delimiter >= 127) throw new Error('numeric matcher must be < 127');
 		return splitFast(delimiter);
 	}
 	return splitSlow(delimiter, format);
@@ -104,7 +104,7 @@ export async function* asLines(
 	} else if (typeof delimiter == 'string' && delimiter.length == 1 && delimiter.charCodeAt(0) < 127) {
 		splitter = splitFast(delimiter.charCodeAt(0));
 	} else if (typeof delimiter == 'number') {
-		if (delimiter >= 127) throw Error('numeric matcher must be < 127');
+		if (delimiter >= 127) throw new Error('numeric matcher must be < 127');
 		splitter = splitFast(delimiter);
 	} else {
 		splitter = split(delimiter);

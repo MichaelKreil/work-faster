@@ -29,7 +29,7 @@ export function wrap<I, O>(
 	if (Symbol.asyncIterator in inner) return wrapRead(inner);
 	if (Symbol.iterator in inner) return wrapRead(inner);
 
-	throw Error('unknown stream');
+	throw new Error('unknown stream');
 }
 
 // ### READ
@@ -44,7 +44,7 @@ export function wrapRead<O>(inner: WFReadSource<O>): WFReadable<O> {
 	if (Symbol.asyncIterator in inner) return new WFReadable(Readable.from(inner));
 	if (Symbol.iterator in inner) return new WFReadable(Readable.from(inner));
 
-	throw Error('unknown readable');
+	throw new Error('unknown readable');
 }
 
 // ### TRANSFORM
@@ -73,7 +73,7 @@ export function wrapTransform<I, O>(inner: WFTransformSource<I, O>): WFTransform
 			}),
 		);
 
-	throw Error('unknown transform');
+	throw new Error('unknown transform');
 }
 
 export function wrapFilterTransform<I, O>(
@@ -119,5 +119,5 @@ export function wrapWrite<I>(inner: WFWriteSource<I>): WFWritable<I> {
 			}),
 		);
 
-	throw Error('unknown writable');
+	throw new Error('unknown writable');
 }
