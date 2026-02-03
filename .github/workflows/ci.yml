@@ -39,6 +39,9 @@ jobs:
       - name: Check vulnerabilities
         run: npm audit
 
+      - name: Check formatting
+        run: npm run format
+
       - name: Lint
         run: npm run lint
 
