@@ -6,16 +6,21 @@ import { compress } from './compress.js';
 vi.mock('./read.js', () => ({
 	read: vi.fn(),
 }));
+const mockProgressBarUpdate = vi.fn();
+const mockProgressBarClose = vi.fn();
+const MockProgressBar = vi.fn(function (this: {
+	update: typeof mockProgressBarUpdate;
+	close: typeof mockProgressBarClose;
+}) {
+	this.update = mockProgressBarUpdate;
+	this.close = mockProgressBarClose;
+});
 vi.mock('../../utils/progress_bar.js', () => ({
-	ProgressBar: vi.fn().mockImplementation(() => ({
-		update: vi.fn(),
-		close: vi.fn(),
-	})),
+	ProgressBar: MockProgressBar,
 }));
 
 // Importing modules after mocking them
 const { read } = await import('./read.js');
-const { ProgressBar } = await import('../../utils/progress_bar.js');
 const { readDataFile } = await import('./data_file_reader.js');
 
 describe('readDataFile', () => {
@@ -120,7 +125,7 @@ describe('readDataFile', () => {
 			format: 'lines',
 		});
 		const result = await toArray(reader);
-		expect(ProgressBar).toHaveBeenCalledWith(18);
+		expect(MockProgressBar).toHaveBeenCalledWith(18);
 		expect(result).toStrictEqual('1,2,3,4,5,6,7,8,9'.split(','));
 	});
 });
