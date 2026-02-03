@@ -6,7 +6,9 @@ export default defineConfig({
 		include: ['**/src/**/*.test.ts'],
 		exclude: ['**/src/**/*.mock.test.ts', '**/node_modules/**'],
 		coverage: {
-			exclude: ['**/dist/**', '**/*.mock.test.ts', '**/node_modules/**'],
+			include: ['src/**/*.ts'],
+			exclude: [
+			],
 		},
 	},
 });
