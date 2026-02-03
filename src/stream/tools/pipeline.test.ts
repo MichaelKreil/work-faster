@@ -1,4 +1,3 @@
-// pipeline.test.ts
 import { Readable, Transform, Writable } from 'node:stream';
 import { pipeline } from './pipeline.js';
 import { wrapWrite } from './wrapper.js';

@@ -2,7 +2,6 @@ import { wrap, wrapRead, wrapTransform, wrapWrite } from './wrapper.js';
 import { WFReadable, WFTransform, WFWritable } from '../classes.js';
 import { Readable, Writable, Transform } from 'node:stream';
 import { fromArray, toArray, toString } from './utils.js';
-import { describe, it, expect, vi } from 'vitest';
 
 describe('Stream Wrapper Functions', () => {
 	// Test data

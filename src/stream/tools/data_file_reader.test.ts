@@ -1,5 +1,4 @@
 import { fromValue, toArray, toBuffer } from './utils.js';
-import { describe, it, expect, vi } from 'vitest';
 import { Compression, Format } from '../types.js';
 import { compress } from './compress.js';
 

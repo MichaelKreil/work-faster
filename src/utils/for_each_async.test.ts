@@ -1,5 +1,4 @@
 import { forEachAsync } from './for_each_async.js';
-import { describe, it, expect, vi } from 'vitest';
 
 describe('forEachAsync', () => {
 	it('should call the callback for each item in the list', async () => {

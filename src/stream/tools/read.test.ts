@@ -1,4 +1,3 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { IncomingMessage } from 'http';
 import { Readable } from 'stream';
 import { toString } from './utils.js';

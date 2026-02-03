@@ -1,6 +1,5 @@
 import type { WriteStream } from 'node:fs';
 import { ProgressBar } from './progress_bar.js';
-import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 
 describe('ProgressBar', () => {
 	let progressBar: ProgressBar;
