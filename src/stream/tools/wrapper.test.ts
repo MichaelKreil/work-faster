@@ -19,11 +19,55 @@ describe('Stream Wrapper Functions', () => {
 		it('should wrap a Transform stream', () => {
 			expect(wrap(new Transform())).toBeInstanceOf(WFTransform);
 		});
+
+		it('should wrap an async iterable', () => {
+			async function* gen() {
+				yield 1;
+			}
+			expect(wrap(gen())).toBeInstanceOf(WFReadable);
+		});
+
+		it('should wrap a sync iterable', () => {
+			expect(wrap([1, 2, 3])).toBeInstanceOf(WFReadable);
+		});
+
+		it('should wrap a function', () => {
+			expect(wrap((x: number) => x * 2)).toBeInstanceOf(WFTransform);
+		});
+
+		it('should throw for unknown stream types', () => {
+			expect(() => wrap({} as Readable)).toThrow('unknown stream');
+		});
 	});
 
 	describe('wrapRead function', () => {
 		it('should wrap a Readable into WFReadable', () => {
 			expect(wrapRead(new Readable())).toBeInstanceOf(WFReadable);
+		});
+
+		it('should return the same WFReadable if already wrapped', () => {
+			const wfReadable = new WFReadable(new Readable());
+			expect(wrapRead(wfReadable)).toBe(wfReadable);
+		});
+
+		it('should wrap an async iterable', async () => {
+			async function* gen() {
+				yield 'a';
+				yield 'b';
+			}
+			const wrapped = wrapRead(gen());
+			expect(wrapped).toBeInstanceOf(WFReadable);
+			expect(await toArray(wrapped)).toEqual(['a', 'b']);
+		});
+
+		it('should wrap a sync iterable', async () => {
+			const wrapped = wrapRead(['x', 'y', 'z']);
+			expect(wrapped).toBeInstanceOf(WFReadable);
+			expect(await toArray(wrapped)).toEqual(['x', 'y', 'z']);
+		});
+
+		it('should throw for unknown readable types', () => {
+			expect(() => wrapRead({} as Readable)).toThrow('unknown readable');
 		});
 	});
 
@@ -36,6 +80,35 @@ describe('Stream Wrapper Functions', () => {
 			const wrappedFuncTransform = wrapTransform((data: string) => data.toString().toUpperCase());
 			expect(wrappedFuncTransform).toBeInstanceOf(WFTransform);
 			expect(await toArray(fromArray(['TestData']).pipe(wrappedFuncTransform))).toEqual(['TESTDATA']);
+		});
+
+		it('should return the same WFTransform if already wrapped', () => {
+			const wfTransform = new WFTransform(new Transform());
+			expect(wrapTransform(wfTransform)).toBe(wfTransform);
+		});
+
+		it('should handle errors thrown in transform function', async () => {
+			const errorTransform = wrapTransform(() => {
+				throw new Error('Transform error');
+			});
+			const readable = fromArray(['test']);
+			readable.pipe(errorTransform);
+
+			await expect(toArray(errorTransform)).rejects.toThrow('Transform error');
+		});
+
+		it('should handle non-Error throws in transform function', async () => {
+			const errorTransform = wrapTransform(() => {
+				throw 'string error';
+			});
+			const readable = fromArray(['test']);
+			readable.pipe(errorTransform);
+
+			await expect(toArray(errorTransform)).rejects.toThrow('string error');
+		});
+
+		it('should throw for unknown transform types', () => {
+			expect(() => wrapTransform({} as Transform)).toThrow('unknown transform');
 		});
 	});
 
@@ -54,6 +127,41 @@ describe('Stream Wrapper Functions', () => {
 					done();
 				});
 			}));
+
+		it('should return the same WFWritable if already wrapped', () => {
+			const wfWritable = new WFWritable(new Writable());
+			expect(wrapWrite(wfWritable)).toBe(wfWritable);
+		});
+
+		it('should handle errors thrown in write function', async () => {
+			const errorWrite = wrapWrite(async () => {
+				throw new Error('Write error');
+			});
+
+			await expect(
+				new Promise((_, reject) => {
+					errorWrite.inner.on('error', reject);
+					errorWrite.inner.write('test');
+				}),
+			).rejects.toThrow('Write error');
+		});
+
+		it('should handle non-Error throws in write function', async () => {
+			const errorWrite = wrapWrite(async () => {
+				throw 'string error';
+			});
+
+			await expect(
+				new Promise((_, reject) => {
+					errorWrite.inner.on('error', reject);
+					errorWrite.inner.write('test');
+				}),
+			).rejects.toThrow('string error');
+		});
+
+		it('should throw for unknown writable types', () => {
+			expect(() => wrapWrite({} as Writable)).toThrow('unknown writable');
+		});
 	});
 
 	describe('WFReadable Class', () => {
@@ -62,6 +170,27 @@ describe('Stream Wrapper Functions', () => {
 			const wfTransform = wrapTransform((c: string) => c.toUpperCase());
 			wfReadable.pipe(wfTransform);
 			expect(await toString(wfTransform)).toEqual('ABC');
+		});
+
+		it('should allow piping to a Duplex directly', async () => {
+			const wfReadable = fromArray(['x', 'y', 'z']);
+			const transform = new Transform({
+				objectMode: true,
+				transform(chunk, _enc, cb) {
+					cb(null, chunk.toUpperCase());
+				},
+			});
+			const result = wfReadable.pipe(transform as unknown as WFTransform<string, string>);
+			expect(result).toBeInstanceOf(WFTransform);
+		});
+
+		it('should be async iterable', async () => {
+			const wfReadable = fromArray([1, 2, 3]);
+			const result: number[] = [];
+			for await (const item of wfReadable) {
+				result.push(item);
+			}
+			expect(result).toEqual([1, 2, 3]);
 		});
 	});
 
@@ -87,6 +216,30 @@ describe('Stream Wrapper Functions', () => {
 			const endPromise = wfTransform.end();
 			mockDuplex.emit('finish'); // Simulate stream finishing
 			await endPromise; // waits for finish
+		});
+
+		it('should allow piping to a Duplex directly', async () => {
+			const wfTransform1 = wrapTransform((x: number) => x * 2);
+			const transform = new Transform({
+				objectMode: true,
+				transform(chunk, _enc, cb) {
+					cb(null, chunk + 1);
+				},
+			});
+			const result = wfTransform1.pipe(transform);
+			expect(result).toBeInstanceOf(WFTransform);
+		});
+
+		it('should be async iterable', async () => {
+			const wfReadable = fromArray([1, 2, 3]);
+			const wfTransform = wrapTransform((x: number) => x * 10);
+			wfReadable.pipe(wfTransform);
+
+			const result: number[] = [];
+			for await (const item of wfTransform) {
+				result.push(item);
+			}
+			expect(result).toEqual([10, 20, 30]);
 		});
 	});
 

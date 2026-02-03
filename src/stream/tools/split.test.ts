@@ -87,4 +87,35 @@ describe('asLines', () => {
 		const result: string[] = await arrayFromAsync(asLines(input));
 		expect(result).toEqual(['lastLineWithoutNewline']);
 	});
+
+	it('should use splitFast for numeric delimiter < 127', async () => {
+		// Using tab character (code 9)
+		const input = asBuffer(fromValue('item1\titem2\titem3\t'));
+		const result: string[] = await arrayFromAsync(asLines(input, 9));
+		expect(result).toEqual(['item1', 'item2', 'item3']);
+	});
+
+	it('should throw for numeric delimiter >= 127', async () => {
+		const input = asBuffer(fromValue('test'));
+		const generator = asLines(input, 127);
+		await expect(generator.next()).rejects.toThrow('numeric matcher must be < 127');
+	});
+
+	it('should use split for regex delimiters', async () => {
+		const input = asBuffer(fromValue('item1::item2::item3::'));
+		const result: string[] = await arrayFromAsync(asLines(input, /::+/));
+		expect(result).toEqual(['item1', 'item2', 'item3']);
+	});
+});
+
+describe('split edge cases', () => {
+	it('should throw for numeric delimiter >= 127', () => {
+		expect(() => split(127)).toThrow('numeric matcher must be < 127');
+	});
+
+	it('should use splitFast for numeric delimiter', async () => {
+		const input = fromArray([Buffer.from('a\tb\tc\t')]);
+		const results = await toArray(input.pipe(split(9))); // tab = 9
+		expect(results).toEqual(['a', 'b', 'c']);
+	});
 });
