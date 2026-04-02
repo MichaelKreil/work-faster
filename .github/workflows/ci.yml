@@ -61,6 +61,6 @@ jobs:
 
       - name: Upload test coverage
         if: matrix.node-version == 22
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
