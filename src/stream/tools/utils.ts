@@ -9,6 +9,10 @@ import { wrapTransform } from './wrapper.js';
  * @param input - The value to convert to a stream.
  * @returns A `WFReadable` stream containing the input value.
  *
+ * **Caveat:** Node's `Readable.from` interprets `null` as end-of-stream, so
+ * `fromValue(null)` (or `undefined`) yields an immediately-closed stream
+ * with zero chunks rather than one chunk holding the value.
+ *
  * @example
  * const stream = fromValue('hello');
  * for await (const chunk of stream) {
