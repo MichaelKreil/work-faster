@@ -91,9 +91,7 @@ export function splitFast(
 					accumulatedSize = 0;
 
 					if (lastChunk.length > maxLineSize) {
-						return callback(
-							new Error(`splitFast: line exceeded max size of ${maxLineSize} bytes without a delimiter`),
-						);
+						return callback(new Error(`splitFast: line exceeded max size of ${maxLineSize} bytes without a delimiter`));
 					}
 				}
 

@@ -50,11 +50,7 @@ export async function read(
  * errors, non-2xx status codes, and on idle timeouts so failures surface
  * instead of hanging.
  */
-function getHttpStream(
-	lib: typeof http | typeof https,
-	url: string,
-	timeoutMs: number,
-): Promise<http.IncomingMessage> {
+function getHttpStream(lib: typeof http | typeof https, url: string, timeoutMs: number): Promise<http.IncomingMessage> {
 	return new Promise<http.IncomingMessage>((resolve, reject) => {
 		const req = lib.request(url, (res) => {
 			const status = res.statusCode ?? 0;
