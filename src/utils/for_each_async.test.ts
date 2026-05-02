@@ -121,6 +121,35 @@ describe('forEachAsync', () => {
 		expect(callback).toHaveBeenNthCalledWith(3, 3, 2);
 	});
 
+	it('should serialize calls to a non-reentrant async iterator', async () => {
+		// A custom async iterator that throws if .next() is called while a
+		// previous call is still pending (a strict but legal implementation).
+		let inFlight = false;
+		let counter = 0;
+		const iter: AsyncIterator<number> = {
+			async next() {
+				if (inFlight) throw new Error('reentrant next() call');
+				inFlight = true;
+				try {
+					await new Promise((r) => setTimeout(r, 1));
+					if (counter >= 5) return { done: true, value: undefined as unknown as number };
+					return { done: false, value: counter++ };
+				} finally {
+					inFlight = false;
+				}
+			},
+		};
+		const seen: number[] = [];
+		await forEachAsync(
+			iter,
+			async (item) => {
+				seen.push(item);
+			},
+			4,
+		);
+		expect(seen.sort()).toEqual([0, 1, 2, 3, 4]);
+	});
+
 	it('should handle errors from an asynchronous generator', async () => {
 		async function* asyncErrorGenerator() {
 			yield 1;

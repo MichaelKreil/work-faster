@@ -17,55 +17,61 @@ export function forEachAsync<I>(
 	maxParallel?: number,
 ): Promise<void> {
 	const concurrency = maxParallel ?? os.cpus().length;
+	const iterator = getIterator(items);
 	let index = 0;
 	let finished = false;
+	// Async iterators are not required to tolerate concurrent .next() calls.
+	// Serialize all pulls behind a single in-flight promise so we never call
+	// next() while a previous pull is still pending.
+	let pulling: Promise<unknown> = Promise.resolve();
+
+	function pull(): Promise<IteratorResult<I>> {
+		const next = pulling.then(() => Promise.resolve(iterator.next()) as Promise<IteratorResult<I>>);
+		pulling = next.catch(() => undefined);
+		return next;
+	}
 
 	return new Promise((resolve, reject) => {
-		let running = 0;
-		const iterator = getIterator(items);
+		let active = 0;
 
-		async function next() {
+		const fail = (err: unknown) => {
 			if (finished) return;
-			if (running >= concurrency) return;
+			finished = true;
+			reject(err);
+		};
 
-			try {
-				running++;
-				const { done, value } = await iterator.next();
-				if (done) {
-					running--;
-					if (running === 0) {
-						finished = true;
-						resolve();
-					}
-					return;
+		async function worker() {
+			while (!finished) {
+				let result: IteratorResult<I>;
+				try {
+					result = await pull();
+				} catch (err) {
+					return fail(err);
 				}
+				if (finished) return;
+				if (result.done) return;
 
 				const currentIndex = index++;
-
-				callback(value as I, currentIndex)
-					.then(() => {
-						running--;
-						// Schedule the next task after completing the current one
-						if (!finished) next();
-					})
-					.catch((err) => {
-						finished = true;
-						reject(err);
-					});
-
-				// Recursively start additional tasks if below concurrency limit
-				if (running < concurrency && !finished) next();
-			} catch (err) {
-				// If an error occurs in the iterator's next method
-				finished = true;
-				reject(err);
+				active++;
+				try {
+					await callback(result.value, currentIndex);
+				} catch (err) {
+					return fail(err);
+				} finally {
+					active--;
+				}
 			}
 		}
 
-		// Start the initial tasks up to the concurrency limit
-		for (let i = 0; i < concurrency; i++) {
-			next();
-		}
+		const workers: Promise<void>[] = [];
+		for (let i = 0; i < concurrency; i++) workers.push(worker());
+
+		Promise.all(workers).then(() => {
+			if (!finished && active === 0) {
+				finished = true;
+				resolve();
+			}
+		}, fail);
 	});
 }
 
