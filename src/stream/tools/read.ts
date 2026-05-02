@@ -1,6 +1,7 @@
-import { createReadStream, statSync } from 'fs';
-import http from 'http';
-import https from 'https';
+import { createReadStream } from 'node:fs';
+import { stat } from 'node:fs/promises';
+import http from 'node:http';
+import https from 'node:https';
 import { WFReadable } from '../classes.js';
 
 /**
@@ -15,7 +16,7 @@ export async function read(filename: string): Promise<{ stream: WFReadable<Buffe
 	} else if (filename.startsWith('https://')) {
 		stream = await getHttpStream(https, filename);
 	} else {
-		size = statSync(filename).size;
+		size = (await stat(filename)).size;
 		stream = createReadStream(filename);
 	}
 
@@ -30,10 +31,21 @@ export async function read(filename: string): Promise<{ stream: WFReadable<Buffe
 }
 
 /**
- * Helper to get a stream for HTTP or HTTPS requests.
+ * Helper to get a stream for HTTP or HTTPS requests. Rejects on connection
+ * errors and on non-2xx status codes so failures surface instead of hanging.
  */
 function getHttpStream(lib: typeof http | typeof https, url: string): Promise<http.IncomingMessage> {
-	return new Promise<http.IncomingMessage>((resolve) => {
-		lib.request(url, (stream) => resolve(stream)).end();
+	return new Promise<http.IncomingMessage>((resolve, reject) => {
+		const req = lib.request(url, (res) => {
+			const status = res.statusCode ?? 0;
+			if (status < 200 || status >= 300) {
+				res.resume();
+				reject(new Error(`HTTP ${status} for ${url}`));
+				return;
+			}
+			resolve(res);
+		});
+		req.on('error', reject);
+		req.end();
 	});
 }
