@@ -62,6 +62,13 @@ describe('splitLines', () => {
 		expect(results).toEqual(['lastSegmentWithoutDelimiter']);
 	});
 
+	it('should error if a single line exceeds maxLineSize', async () => {
+		// 32MB of non-newline bytes pushes lastChunk past the 1MB cap.
+		const big = Buffer.alloc(32 * 1024 * 1024, 0x41);
+		const input = fromValue(big);
+		await expect(toArray(input.pipe(splitFast(10, 'utf8', 1024 * 1024)))).rejects.toThrow(/exceeded max size/);
+	});
+
 	it('should preserve UTF-8 multi-byte chars when chunks split mid-character', async () => {
 		// 'café\nrésumé\n' as UTF-8 split between the two bytes of 'é' (0xC3 0xA9).
 		const full = Buffer.from('café\nrésumé\n', 'utf8');

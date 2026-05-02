@@ -5,6 +5,10 @@ import { WFReadable, WFTransform } from '../classes.js';
 // Buffer size threshold before processing accumulated chunks.
 // 16 MB balances memory usage with processing efficiency.
 const MAX_BUFFER_SIZE = 16 * 1024 * 1024;
+// Hard cap on the size of a single line (the bytes between two delimiters).
+// Without this, a delimiter-free input grows lastChunk until OOM. 256 MB is
+// far beyond any realistic line and still bounded.
+const MAX_LINE_SIZE = 256 * 1024 * 1024;
 
 export function split(
 	delimiter: number | string | RegExp = '\n',
@@ -45,7 +49,11 @@ function splitSlow(matcher: string | RegExp = '\n', format: BufferEncoding = 'ut
 	);
 }
 
-export function splitFast(code: number = 10, format: BufferEncoding = 'utf8'): WFTransform<Buffer, string> {
+export function splitFast(
+	code: number = 10,
+	format: BufferEncoding = 'utf8',
+	maxLineSize: number = MAX_LINE_SIZE,
+): WFTransform<Buffer, string> {
 	let bufferChunks: Buffer[] = [];
 	let accumulatedSize = 0;
 	let lastChunk = Buffer.alloc(0);
@@ -71,7 +79,7 @@ export function splitFast(code: number = 10, format: BufferEncoding = 'utf8'): W
 		new Transform({
 			autoDestroy: true,
 			readableObjectMode: true,
-			transform(chunk: Buffer, _encoding: BufferEncoding, callback: () => void) {
+			transform(chunk: Buffer, _encoding: BufferEncoding, callback: (err?: Error) => void) {
 				// Accumulate chunks until we reach the threshold
 				bufferChunks.push(chunk);
 				accumulatedSize += chunk.length;
@@ -81,6 +89,12 @@ export function splitFast(code: number = 10, format: BufferEncoding = 'utf8'): W
 					processBuffer(this.push.bind(this));
 					bufferChunks = [];
 					accumulatedSize = 0;
+
+					if (lastChunk.length > maxLineSize) {
+						return callback(
+							new Error(`splitFast: line exceeded max size of ${maxLineSize} bytes without a delimiter`),
+						);
+					}
 				}
 
 				callback();
