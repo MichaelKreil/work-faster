@@ -75,6 +75,14 @@ describe('Compression and Decompression', () => {
 		);
 	});
 
+	it('should reject out-of-range compression levels', () => {
+		expect(() => compress('gzip', { level: 99 })).toThrow(/Invalid gzip level 99.*\[0, 9\]/);
+		expect(() => compress('brotli', { level: -1 })).toThrow(/Invalid brotli level -1.*\[0, 11\]/);
+		expect(() => compress('lz4', { level: 0 })).toThrow(/Invalid lz4 level 0.*\[1, 12\]/);
+		expect(() => compress('zstd', { level: 30 })).toThrow(/Invalid zstd level 30.*\[1, 22\]/);
+		expect(() => compress('gzip', { level: 1.5 })).toThrow(/Invalid gzip level 1.5/);
+	});
+
 	it('should throw an error for unsupported compression types during decompression', async () => {
 		await expect(() => decompress('unsupported' as unknown as Compression)).toThrow(
 			'Unsupported compression type: unsupported',

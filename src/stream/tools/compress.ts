@@ -16,10 +16,26 @@ export interface CompressOptions {
 	 * The compression level to apply.
 	 * - For `gzip`: Valid values are `0` (no compression) to `9` (maximum compression).
 	 * - For `brotli`: Valid values are `0` (no compression) to `11` (maximum compression).
-	 * - For `lz4` and `zstd`: Compression levels depend on the underlying library, typically `1` (fastest) to `19` (slowest, highest compression).
+	 * - For `lz4`: Valid values are `1` (fastest) to `12` (slowest, highest compression).
+	 * - For `zstd`: Valid values are `1` (fastest) to `22` (slowest, highest compression).
 	 * Default level is used if not specified.
 	 */
 	level?: number;
+}
+
+const LEVEL_RANGES: Record<Exclude<Compression, 'none'>, [number, number]> = {
+	gzip: [0, 9],
+	brotli: [0, 11],
+	lz4: [1, 12],
+	zstd: [1, 22],
+};
+
+function checkLevel(type: Exclude<Compression, 'none'>, level: number | undefined): void {
+	if (level === undefined) return;
+	const [min, max] = LEVEL_RANGES[type];
+	if (!Number.isInteger(level) || level < min || level > max) {
+		throw new Error(`Invalid ${type} level ${level}; must be an integer in [${min}, ${max}]`);
+	}
 }
 
 /**
@@ -83,6 +99,7 @@ export function decompress(type: Compression): WFTransform<Buffer, Buffer> {
  */
 export function compress(type: Compression, options: CompressOptions = {}): WFTransform<Buffer, Buffer> {
 	const { level } = options;
+	if (type !== 'none') checkLevel(type, level);
 
 	switch (type) {
 		case 'brotli':
