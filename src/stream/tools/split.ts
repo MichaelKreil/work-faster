@@ -104,7 +104,7 @@ export async function* asLines(
 	stream: WFReadable<Buffer | string>,
 	delimiter?: string | RegExp | number,
 	format: BufferEncoding = 'utf8',
-): AsyncIterable<string> {
+): AsyncGenerator<string> {
 	let splitter: WFTransform<Buffer, string>;
 	if (delimiter == null) {
 		splitter = splitFast(10, format);

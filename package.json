@@ -4,7 +4,7 @@
   "description": "same as array.forEach, but in parallel",
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.build.json",
-    "check": "npm run format && npm run lint && npm run build && npm run test",
+    "check": "npm run format && npm run lint && npm run typecheck && npm run build && npm run test",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "lint": "eslint . --color",
@@ -12,6 +12,7 @@
     "release": "vrt release-npm",
     "test-coverage": "vitest run --coverage",
     "test": "vitest run",
+    "typecheck": "tsc --noEmit",
     "upgrade": "vrt deps-upgrade"
   },
   "main": "dist/index.js",
