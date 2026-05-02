@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+- **engines:** require Node.js `>=22`. Node 20 reaches end-of-life in
+  April 2026; the CI matrix and the `engines` field have both been
+  bumped accordingly. Bumping to `>=22` is a breaking change and the
+  next release should be cut as a major version.
+
 ### Bug Fixes
 
 - **read:** HTTP/HTTPS requests no longer hang on connection errors, non-2xx
