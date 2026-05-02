@@ -1,9 +1,15 @@
+import { PassThrough } from 'node:stream';
 import { createBrotliDecompress, createGunzip, createGzip, createBrotliCompress, constants } from 'node:zlib';
 import { spawn } from './spawn.js';
 import type { Compression } from '../types.js';
-import { passThrough } from './utils.js';
 import { wrapTransform } from './wrapper.js';
 import { WFTransform } from '../classes.js';
+
+// 'none' is a byte-mode passthrough so it composes with byte-mode
+// compressors instead of switching the pipeline into object mode.
+function bytePassThrough(): WFTransform<Buffer, Buffer> {
+	return wrapTransform(new PassThrough());
+}
 
 export interface CompressOptions {
 	/**
@@ -44,7 +50,7 @@ export function decompress(type: Compression): WFTransform<Buffer, Buffer> {
 		case 'zstd':
 			return spawn('zstd', ['-d']);
 		case 'none':
-			return passThrough();
+			return bytePassThrough();
 		default:
 			throw new Error(`Unsupported compression type: ${type}`);
 	}
@@ -92,7 +98,7 @@ export function compress(type: Compression, options: CompressOptions = {}): WFTr
 		case 'zstd':
 			return spawn('zstd', ['-' + (level ?? 3)]);
 		case 'none':
-			return passThrough();
+			return bytePassThrough();
 		default:
 			throw new Error(`Unsupported compression type: ${type}`);
 	}
