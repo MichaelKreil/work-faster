@@ -7,7 +7,7 @@ export default [
 	js.configs.recommended,
 	...ts.configs.recommended,
 	{
-		ignores: ['bin/**/*.*', 'coverage/**/*.*', 'dist/**/*.*'],
+		ignores: ['coverage/**/*.*', 'dist/**/*.*'],
 	},
 	{
 		files: ['src/**/*.ts'],

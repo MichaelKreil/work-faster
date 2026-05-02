@@ -1,5 +1,6 @@
 *.code-workspace
 *.tmp
+.DS_Store
 coverage/
 dist/
 docs/
