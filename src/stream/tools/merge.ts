@@ -82,4 +82,12 @@ class DuplexWrapper extends Duplex {
 		}
 		if (reads === 0) this._waiting = true;
 	}
+
+	_destroy(err: Error | null, cb: (err?: Error | null) => void) {
+		// Propagate teardown to the inner streams so they don't leak when
+		// the wrapper is destroyed (explicitly or via a pipeline error).
+		if (!this._writable.destroyed) this._writable.destroy(err ?? undefined);
+		if (!this._readable.destroyed) this._readable.destroy(err ?? undefined);
+		cb(err);
+	}
 }

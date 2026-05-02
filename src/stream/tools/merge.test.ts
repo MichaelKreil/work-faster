@@ -1,3 +1,4 @@
+import { PassThrough } from 'node:stream';
 import { merge } from './merge.js';
 import { pipeline } from './pipeline.js';
 import { wrapTransform, wrapWrite } from './wrapper.js';
@@ -52,6 +53,18 @@ describe('merge function', () => {
 				// Do nothing
 			}
 		}).rejects.toThrow('Test error');
+	});
+
+	it('should destroy the inner streams when the wrapper is destroyed', async () => {
+		const inner1 = new PassThrough();
+		const inner2 = new PassThrough();
+		const merged = merge(wrapTransform(inner1), wrapTransform(inner2));
+
+		merged.inner.destroy();
+		await new Promise((r) => setImmediate(r));
+
+		expect(inner1.destroyed).toBe(true);
+		expect(inner2.destroyed).toBe(true);
 	});
 
 	it('should handle errors in WFTransform to WFWritable merge', async () => {
