@@ -30,7 +30,7 @@ export interface CompressOptions {
  * @throws An error if the specified compression type is unsupported.
  *
  * @example
- * const decompressStream = await decompress('gzip');
+ * const decompressStream = decompress('gzip');
  * sourceStream.pipe(decompressStream).pipe(destinationStream);
  */
 export function decompress(type: Compression): WFTransform<Buffer, Buffer> {
@@ -72,7 +72,7 @@ export function decompress(type: Compression): WFTransform<Buffer, Buffer> {
  * @throws An error if the specified compression type is unsupported.
  *
  * @example
- * const compressStream = await compress('brotli', { level: 9 });
+ * const compressStream = compress('brotli', { level: 9 });
  * sourceStream.pipe(compressStream).pipe(destinationStream);
  */
 export function compress(type: Compression, options: CompressOptions = {}): WFTransform<Buffer, Buffer> {

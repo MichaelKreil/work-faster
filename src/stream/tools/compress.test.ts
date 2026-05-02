@@ -21,7 +21,7 @@ describe('Compression and Decompression', () => {
 		for (const { name, hexStart, hexEnd } of algorithms) {
 			it(name, async () => {
 				// Compress the long string
-				const compressedBuffer = await toBuffer(fromValue(buffer).pipe(await compress(name)));
+				const compressedBuffer = await toBuffer(fromValue(buffer).pipe(compress(name)));
 
 				// Validate compression by checking the initial bytes of the compressed output
 				expect(Buffer.isBuffer(compressedBuffer)).toBe(true);
@@ -31,7 +31,7 @@ describe('Compression and Decompression', () => {
 				if (hexEnd.length > 0) expect(hex.slice(-hexEnd.length)).toBe(hexEnd);
 
 				// Decompress the buffer back to the original string
-				const decompressedBuffer = await toBuffer(fromValue(compressedBuffer).pipe(await decompress(name)));
+				const decompressedBuffer = await toBuffer(fromValue(compressedBuffer).pipe(decompress(name)));
 
 				// Verify that decompression yields the original string
 				expect(decompressedBuffer).toEqual(buffer);
@@ -44,10 +44,10 @@ describe('Compression and Decompression', () => {
 			if (name == 'none') continue;
 			it(name, async () => {
 				// Compress the string with level 1
-				const compressedLevel1 = await toBuffer(fromValue(buffer).pipe(await compress(name, { level: 1 })));
+				const compressedLevel1 = await toBuffer(fromValue(buffer).pipe(compress(name, { level: 1 })));
 
 				// Compress the string with level 9
-				const compressedLevel9 = await toBuffer(fromValue(buffer).pipe(await compress(name, { level: 9 })));
+				const compressedLevel9 = await toBuffer(fromValue(buffer).pipe(compress(name, { level: 9 })));
 
 				// Assert that compression at level 9 is more efficient (smaller) than at level 1
 				expect(compressedLevel9.length).toBeLessThan(compressedLevel1.length);
@@ -57,13 +57,13 @@ describe('Compression and Decompression', () => {
 
 	it('should handle "none" compression by returning the original buffer', async () => {
 		// Compress with 'none'
-		const compressedBuffer = await toBuffer(fromValue(buffer).pipe(await compress('none')));
+		const compressedBuffer = await toBuffer(fromValue(buffer).pipe(compress('none')));
 
 		// Validate that the compressed buffer is identical to the original
 		expect(compressedBuffer).toEqual(buffer);
 
 		// Decompress with 'none'
-		const decompressedBuffer = await toBuffer(fromValue(compressedBuffer).pipe(await decompress('none')));
+		const decompressedBuffer = await toBuffer(fromValue(compressedBuffer).pipe(decompress('none')));
 
 		// Validate that the decompressed buffer is also identical
 		expect(decompressedBuffer).toEqual(buffer);
@@ -87,8 +87,8 @@ describe('Compression and Decompression', () => {
 		for (const { name } of algorithms) {
 			it(name, async () => {
 				// Compress and decompress empty input
-				const compressedBuffer = await toBuffer(fromValue(emptyBuffer).pipe(await compress(name)));
-				const decompressedBuffer = await toBuffer(fromValue(compressedBuffer).pipe(await decompress(name)));
+				const compressedBuffer = await toBuffer(fromValue(emptyBuffer).pipe(compress(name)));
+				const decompressedBuffer = await toBuffer(fromValue(compressedBuffer).pipe(decompress(name)));
 
 				// Validate that decompression returns an empty buffer
 				expect(decompressedBuffer).toEqual(emptyBuffer);
@@ -101,8 +101,8 @@ describe('Compression and Decompression', () => {
 		for (const { name } of algorithms) {
 			it(name, async () => {
 				// Compress and decompress large input
-				const compressedBuffer = await toBuffer(fromValue(largeBuffer).pipe(await compress(name)));
-				const decompressedBuffer = await toBuffer(fromValue(compressedBuffer).pipe(await decompress(name)));
+				const compressedBuffer = await toBuffer(fromValue(largeBuffer).pipe(compress(name)));
+				const decompressedBuffer = await toBuffer(fromValue(compressedBuffer).pipe(decompress(name)));
 
 				// Validate that decompression returns the original buffer
 				expect(decompressedBuffer.compare(largeBuffer)).toBe(0);
