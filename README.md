@@ -133,6 +133,12 @@ import { forEachAsync } from 'work-faster';
 await forEachAsync([1, 2, 3], async (item) => console.log(item), 2);
 ```
 
+> **Pick `maxParallel` for the work, not the machine.** The default is
+> `os.cpus().length`, which is right for CPU-bound callbacks. For
+> I/O-bound work (HTTP, disk, databases) the right value is whatever
+> the remote service can handle - typically much higher than the CPU
+> count. Pass an explicit number in those cases.
+
 **Compressing and Decompressing Data**
 
 ```javascript
