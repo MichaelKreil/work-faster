@@ -21,4 +21,16 @@ describe('spawn', () => {
 			'Failed to execute command "invalidCommand": spawn invalidCommand ENOENT',
 		);
 	});
+
+	it('should not treat stderr output from a successful command as an error', async () => {
+		// `sh -c 'echo err 1>&2; cat'` writes to stderr but exits 0.
+		const result = await toString(fromValue('payload').pipe(spawn('sh', ['-c', 'echo err 1>&2; cat'])));
+		expect(result).toBe('payload');
+	});
+
+	it('should include stderr in the error when the command exits non-zero', async () => {
+		await expect(toString(fromValue('').pipe(spawn('sh', ['-c', 'echo "boom" 1>&2; exit 3'])))).rejects.toThrow(
+			/Process exited with code 3.*boom/s,
+		);
+	});
 });
