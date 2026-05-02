@@ -4,17 +4,32 @@ import http from 'node:http';
 import https from 'node:https';
 import { WFReadable } from '../classes.js';
 
+const DEFAULT_HTTP_TIMEOUT_MS = 30_000;
+
+export interface ReadOptions {
+	/**
+	 * Idle timeout for HTTP/HTTPS requests, in milliseconds. Applies both to
+	 * connection setup and to gaps between bytes once the response has started.
+	 * Defaults to 30s. Pass 0 to disable.
+	 */
+	httpTimeoutMs?: number;
+}
+
 /**
  * Reads a file from a local path or URL and returns a readable stream and its size.
  */
-export async function read(filename: string): Promise<{ stream: WFReadable<Buffer>; size: number }> {
+export async function read(
+	filename: string,
+	options: ReadOptions = {},
+): Promise<{ stream: WFReadable<Buffer>; size: number }> {
+	const httpTimeoutMs = options.httpTimeoutMs ?? DEFAULT_HTTP_TIMEOUT_MS;
 	let stream,
 		size: number = 0;
 
 	if (filename.startsWith('http://')) {
-		stream = await getHttpStream(http, filename);
+		stream = await getHttpStream(http, filename, httpTimeoutMs);
 	} else if (filename.startsWith('https://')) {
-		stream = await getHttpStream(https, filename);
+		stream = await getHttpStream(https, filename, httpTimeoutMs);
 	} else {
 		size = (await stat(filename)).size;
 		stream = createReadStream(filename);
@@ -32,9 +47,14 @@ export async function read(filename: string): Promise<{ stream: WFReadable<Buffe
 
 /**
  * Helper to get a stream for HTTP or HTTPS requests. Rejects on connection
- * errors and on non-2xx status codes so failures surface instead of hanging.
+ * errors, non-2xx status codes, and on idle timeouts so failures surface
+ * instead of hanging.
  */
-function getHttpStream(lib: typeof http | typeof https, url: string): Promise<http.IncomingMessage> {
+function getHttpStream(
+	lib: typeof http | typeof https,
+	url: string,
+	timeoutMs: number,
+): Promise<http.IncomingMessage> {
 	return new Promise<http.IncomingMessage>((resolve, reject) => {
 		const req = lib.request(url, (res) => {
 			const status = res.statusCode ?? 0;
@@ -43,8 +63,18 @@ function getHttpStream(lib: typeof http | typeof https, url: string): Promise<ht
 				reject(new Error(`HTTP ${status} for ${url}`));
 				return;
 			}
+			if (timeoutMs > 0) {
+				res.setTimeout(timeoutMs, () => {
+					res.destroy(new Error(`HTTP response idle for ${timeoutMs}ms: ${url}`));
+				});
+			}
 			resolve(res);
 		});
+		if (timeoutMs > 0) {
+			req.setTimeout(timeoutMs, () => {
+				req.destroy(new Error(`HTTP request timed out after ${timeoutMs}ms: ${url}`));
+			});
+		}
 		req.on('error', reject);
 		req.end();
 	});

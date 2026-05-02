@@ -17,7 +17,15 @@ vi.mock('node:https', () => ({ default: { request: httpsRequest } }));
 const { read } = await import('./read.js');
 
 function mockRequest() {
-	return { on: vi.fn(), end: vi.fn() };
+	return { on: vi.fn(), end: vi.fn(), setTimeout: vi.fn(), destroy: vi.fn() };
+}
+
+function mockResponse(body: string, headers: Record<string, string>, statusCode: number): IncomingMessage {
+	const stream = Readable.from([body]) as IncomingMessage;
+	stream.headers = headers;
+	stream.statusCode = statusCode;
+	stream.setTimeout = vi.fn() as unknown as IncomingMessage['setTimeout'];
+	return stream;
 }
 
 describe('read', () => {
@@ -41,12 +49,10 @@ describe('read', () => {
 
 	it('should return an HTTP stream and content length for an HTTP URL', async () => {
 		const mockSize = 2048;
-		const mockStream = Readable.from(['http content']) as IncomingMessage;
-		mockStream.headers = { 'content-length': mockSize.toString() };
-		mockStream.statusCode = 200;
+		const response = mockResponse('http content', { 'content-length': mockSize.toString() }, 200);
 
 		httpRequest.mockImplementation((_url, cb) => {
-			cb(mockStream);
+			cb(response);
 			return mockRequest();
 		});
 
@@ -60,12 +66,10 @@ describe('read', () => {
 
 	it('should return an HTTPS stream and content length for an HTTPS URL', async () => {
 		const mockSize = 3072;
-		const mockStream = Readable.from(['https content']) as IncomingMessage;
-		mockStream.headers = { 'content-length': mockSize.toString() };
-		mockStream.statusCode = 200;
+		const response = mockResponse('https content', { 'content-length': mockSize.toString() }, 200);
 
 		httpsRequest.mockImplementation((_, cb) => {
-			cb(mockStream);
+			cb(response);
 			return mockRequest();
 		});
 
@@ -78,12 +82,10 @@ describe('read', () => {
 	});
 
 	it('should reject on a non-2xx HTTP response', async () => {
-		const mockStream = Readable.from(['not found']) as IncomingMessage;
-		mockStream.headers = {};
-		mockStream.statusCode = 404;
+		const response = mockResponse('not found', {}, 404);
 
 		httpsRequest.mockImplementation((_, cb) => {
-			cb(mockStream);
+			cb(response);
 			return mockRequest();
 		});
 
@@ -92,7 +94,7 @@ describe('read', () => {
 
 	it('should reject when the underlying request emits an error', async () => {
 		httpsRequest.mockImplementation(() => {
-			const req = { on: vi.fn(), end: vi.fn() };
+			const req = mockRequest();
 			queueMicrotask(() => {
 				const errCall = req.on.mock.calls.find((c) => c[0] === 'error');
 				errCall?.[1](new Error('boom'));
@@ -101,5 +103,33 @@ describe('read', () => {
 		});
 
 		await expect(read('https://example.com/file')).rejects.toThrow('boom');
+	});
+
+	it('should arm a request timeout when httpTimeoutMs is set', async () => {
+		const response = mockResponse('ok', {}, 200);
+		const req = mockRequest();
+		httpsRequest.mockImplementation((_, cb) => {
+			cb(response);
+			return req;
+		});
+
+		await read('https://example.com/file', { httpTimeoutMs: 5000 });
+
+		expect(req.setTimeout).toHaveBeenCalledWith(5000, expect.any(Function));
+		expect(response.setTimeout).toHaveBeenCalledWith(5000, expect.any(Function));
+	});
+
+	it('should skip arming a timeout when httpTimeoutMs is 0', async () => {
+		const response = mockResponse('ok', {}, 200);
+		const req = mockRequest();
+		httpsRequest.mockImplementation((_, cb) => {
+			cb(response);
+			return req;
+		});
+
+		await read('https://example.com/file', { httpTimeoutMs: 0 });
+
+		expect(req.setTimeout).not.toHaveBeenCalled();
+		expect(response.setTimeout).not.toHaveBeenCalled();
 	});
 });
