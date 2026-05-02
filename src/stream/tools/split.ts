@@ -129,7 +129,14 @@ export async function* asLines(
 		splitter = split(delimiter, format);
 	}
 
-	for await (const line of stream.pipe(splitter)) {
-		yield line;
+	const piped = stream.pipe(splitter);
+	try {
+		for await (const line of piped) {
+			yield line;
+		}
+	} finally {
+		// Destroy the splitter so a consumer that breaks early doesn't leak
+		// the splitter (and the source stream piped into it).
+		if (!splitter.inner.destroyed) splitter.inner.destroy();
 	}
 }

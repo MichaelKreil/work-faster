@@ -122,6 +122,18 @@ describe('asLines', () => {
 		const result: string[] = await arrayFromAsync(asLines(input, /::+/));
 		expect(result).toEqual(['item1', 'item2', 'item3']);
 	});
+
+	it('should tear down the splitter when the consumer breaks early', async () => {
+		const input = asBuffer(fromValue('a\nb\nc\nd\ne\n'));
+		const lines: string[] = [];
+		for await (const line of asLines(input)) {
+			lines.push(line);
+			if (lines.length === 2) break;
+		}
+		expect(lines).toEqual(['a', 'b']);
+		// Source stream should be torn down via the destroyed splitter.
+		expect(input.inner.destroyed).toBe(true);
+	});
 });
 
 describe('split edge cases', () => {
