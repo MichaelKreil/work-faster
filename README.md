@@ -136,8 +136,8 @@ await forEachAsync([1, 2, 3], async (item) => console.log(item), 2);
 **Compressing and Decompressing Data**
 
 ```javascript
-import { compress, decompress } from 'work-faster';
+import { Stream } from 'work-faster';
 
-const compressedStream = await compress('gzip');
-const decompressedStream = await decompress('gzip');
+const compressedStream = Stream.compress('gzip');
+const decompressedStream = Stream.decompress('gzip');
 ```

@@ -9,23 +9,22 @@ import { WFReadable } from '../classes.js';
  * Reads a data file, optionally decompresses it, and parses it based on the specified format.
  *
  * Overload signatures:
- * - For CSV, CSV Fast, and TSV formats: Returns `WFReadable<object>`.
- * - For JSON format: Returns `WFReadable<unknown>`.
+ * - For CSV and TSV formats: Returns `WFReadable<object>`.
+ * - For NDJSON format: Returns `WFReadable<unknown>`.
  * - For lines of text: Returns `WFReadable<string>`.
  *
  * @param filename - The path to the data file to be read.
  * @param options - Configuration options:
  *   - `compression`: The compression type applied to the file. Supported values are `'gzip'`, `'brotli'`, `'lz4'`, `'zstd'`, or `'none'`.
  *   - `format`: The format of the file content:
- *     - `'csv'`: Comma-separated values, parsed using a standard CSV parser.
- *     - `'csv_fast'`: Comma-separated values, parsed using a fast parser with header detection.
+ *     - `'csv'`: Comma-separated values, parsed with header detection (delimiter auto-detected from `,`, `;`, or `\t`).
  *     - `'tsv'`: Tab-separated values.
- *     - `'json'`: Newline-delimited JSON (NDJSON).
+ *     - `'ndjson'`: Newline-delimited JSON.
  *     - `'lines'`: Raw lines of text.
  *   - `progress`: Whether to display a progress bar for large files. Requires `size` metadata to be available.
  * @returns An async iterable containing the parsed data:
- *   - `WFReadable<object>` for `'csv'`, `'csv_fast'`, and `'tsv'`.
- *   - `WFReadable<unknown>` for `'json'`.
+ *   - `WFReadable<object>` for `'csv'` and `'tsv'`.
+ *   - `WFReadable<unknown>` for `'ndjson'`.
  *   - `WFReadable<string>` for `'lines'`.
  *
  * @throws Error if the specified format or compression type is unsupported.
@@ -38,8 +37,8 @@ import { WFReadable } from '../classes.js';
  * }
  *
  * @example
- * // Parse a compressed JSON file
- * const jsonStream = await readDataFile('data.json.gz', { format: 'json', compression: 'gzip' });
+ * // Parse a compressed NDJSON file
+ * const jsonStream = await readDataFile('data.ndjson.gz', { format: 'ndjson', compression: 'gzip' });
  * for await (const obj of jsonStream) {
  *   console.log(obj); // { key: 'value', ... }
  * }
