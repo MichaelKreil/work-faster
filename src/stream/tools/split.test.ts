@@ -61,6 +61,15 @@ describe('splitLines', () => {
 		const results = await toArray(input.pipe(splitFast()));
 		expect(results).toEqual(['lastSegmentWithoutDelimiter']);
 	});
+
+	it('should preserve UTF-8 multi-byte chars when chunks split mid-character', async () => {
+		// 'café\nrésumé\n' as UTF-8 split between the two bytes of 'é' (0xC3 0xA9).
+		const full = Buffer.from('café\nrésumé\n', 'utf8');
+		const cut = full.indexOf(0xc3); // first byte of 'é' in 'café'
+		const input = fromArray([full.subarray(0, cut + 1), full.subarray(cut + 1)]);
+		const results = await toArray(input.pipe(splitFast()));
+		expect(results).toEqual(['café', 'résumé']);
+	});
 });
 
 describe('asLines', () => {

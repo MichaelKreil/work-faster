@@ -10,13 +10,13 @@ export function split(
 	delimiter: number | string | RegExp = '\n',
 	format: BufferEncoding = 'utf8',
 ): WFTransform<Buffer, string> {
-	if (delimiter == null) return splitFast();
+	if (delimiter == null) return splitFast(10, format);
 	if (typeof delimiter == 'string' && delimiter.length == 1 && delimiter.charCodeAt(0) < 127) {
-		return splitFast(delimiter.charCodeAt(0));
+		return splitFast(delimiter.charCodeAt(0), format);
 	}
 	if (typeof delimiter == 'number') {
 		if (delimiter >= 127) throw new Error('numeric matcher must be < 127');
-		return splitFast(delimiter);
+		return splitFast(delimiter, format);
 	}
 	return splitSlow(delimiter, format);
 }
@@ -45,19 +45,21 @@ function splitSlow(matcher: string | RegExp = '\n', format: BufferEncoding = 'ut
 	);
 }
 
-export function splitFast(code: number = 10): WFTransform<Buffer, string> {
+export function splitFast(code: number = 10, format: BufferEncoding = 'utf8'): WFTransform<Buffer, string> {
 	let bufferChunks: Buffer[] = [];
 	let accumulatedSize = 0;
 	let lastChunk = Buffer.alloc(0);
+	const decoder = new StringDecoder(format);
 
-	// Helper function to process a buffer, splitting it by `code` and pushing each part
+	// Helper function to process a buffer, splitting it by `code` and pushing each part.
+	// StringDecoder gracefully handles truncated multi-byte sequences at the tail.
 	function processBuffer(push: (chunk: string) => void) {
 		const buffer = Buffer.concat([lastChunk, ...bufferChunks]);
 		let start = 0;
 		let end;
 
 		while ((end = buffer.indexOf(code, start)) !== -1) {
-			push(buffer.subarray(start, end).toString());
+			push(decoder.write(buffer.subarray(start, end)));
 			start = end + 1;
 		}
 
@@ -88,8 +90,10 @@ export function splitFast(code: number = 10): WFTransform<Buffer, string> {
 				if (bufferChunks.length > 0 || lastChunk.length > 0) {
 					processBuffer(this.push.bind(this));
 				}
-				// Push any remaining data as a final chunk
-				if (lastChunk.length > 0) this.push(lastChunk.toString());
+				// Flush the decoder so any trailing partial sequence is finalized.
+				if (lastChunk.length > 0) this.push(decoder.write(lastChunk));
+				const tail = decoder.end();
+				if (tail.length > 0) this.push(tail);
 				callback();
 			},
 		}),
@@ -99,17 +103,18 @@ export function splitFast(code: number = 10): WFTransform<Buffer, string> {
 export async function* asLines(
 	stream: WFReadable<Buffer | string>,
 	delimiter?: string | RegExp | number,
+	format: BufferEncoding = 'utf8',
 ): AsyncIterable<string> {
 	let splitter: WFTransform<Buffer, string>;
 	if (delimiter == null) {
-		splitter = splitFast();
+		splitter = splitFast(10, format);
 	} else if (typeof delimiter == 'string' && delimiter.length == 1 && delimiter.charCodeAt(0) < 127) {
-		splitter = splitFast(delimiter.charCodeAt(0));
+		splitter = splitFast(delimiter.charCodeAt(0), format);
 	} else if (typeof delimiter == 'number') {
 		if (delimiter >= 127) throw new Error('numeric matcher must be < 127');
-		splitter = splitFast(delimiter);
+		splitter = splitFast(delimiter, format);
 	} else {
-		splitter = split(delimiter);
+		splitter = split(delimiter, format);
 	}
 
 	for await (const line of stream.pipe(splitter)) {
