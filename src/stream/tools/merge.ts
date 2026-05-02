@@ -77,8 +77,10 @@ class DuplexWrapper extends Duplex {
 		let buf,
 			reads = 0;
 		while ((buf = this._readable.read()) !== null) {
-			this.push(buf);
 			reads++;
+			// Stop draining when the consumer signals backpressure; the next
+			// _read call (after the readable side drains) will resume.
+			if (!this.push(buf)) return;
 		}
 		if (reads === 0) this._waiting = true;
 	}
