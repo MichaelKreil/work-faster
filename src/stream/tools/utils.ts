@@ -117,6 +117,8 @@ export async function arrayFromAsync<T>(iter: AsyncIterable<T>): Promise<T[]> {
 /**
  * Creates a transformation stream that flattens arrays of values into individual elements.
  *
+ * **Shallow** - nested arrays are emitted as-is and not recursively flattened.
+ *
  * @template T - The type of elements in the input arrays.
  * @returns A `WFTransform` stream that emits individual elements from input arrays.
  *
