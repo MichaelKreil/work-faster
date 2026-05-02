@@ -69,6 +69,29 @@ describe('splitLines', () => {
 		expect(results).toEqual(['lastSegmentWithoutDelimiter']);
 	});
 
+	it('should carry the partial last line across the MAX_BUFFER_SIZE boundary', async () => {
+		// Build a chunk that crosses the 16 MB threshold and ends mid-line.
+		// First chunk: 16 MB + a few bytes of "abc" without newline.
+		// Second chunk: "def\n" so the assembled tail is "abcdef".
+		const big = Buffer.alloc(16 * 1024 * 1024 + 3, 0x41); // 16 MB+3 of 'A'
+		big[big.length - 3] = 0x61; // a
+		big[big.length - 2] = 0x62; // b
+		big[big.length - 1] = 0x63; // c
+		// Insert a newline near the start so we have at least one full line
+		// before the threshold trips and lastChunk gets carried.
+		big[5] = 0x0a; // \n at position 5
+
+		const chunks = [big, Buffer.from('def\nshort\n')];
+		const results = await toArray(fromArray(chunks).pipe(splitFast()));
+
+		// First line: 5 'A's, then a long line of 'A's ending with 'abcdef'.
+		expect(results.length).toBe(3);
+		expect(results[0]).toBe('AAAAA');
+		expect(results[1].endsWith('abcdef')).toBe(true);
+		expect(results[1].length).toBe(16 * 1024 * 1024 + 3 - 6 + 3); // remaining As + 'abc' + 'def'
+		expect(results[2]).toBe('short');
+	});
+
 	it('should error if a single line exceeds maxLineSize', async () => {
 		// 32MB of non-newline bytes pushes lastChunk past the 1MB cap.
 		const big = Buffer.alloc(32 * 1024 * 1024, 0x41);
