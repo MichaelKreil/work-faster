@@ -17,11 +17,12 @@ describe('ProgressBar', () => {
 		vi.restoreAllMocks();
 	});
 
-	it('should initialize with the correct values', () => {
+	it('should initialize with the correct values without writing to stderr', () => {
 		expect(progressBar['index']).toBe(0);
 		expect(progressBar['total']).toBe(100);
 		expect(progressBar['timeStep']).toBe(1000);
-		expect(progressBar['previousStates'].length).toBe(1); // initial state should be logged
+		expect(progressBar['previousStates'].length).toBe(0);
+		expect(stderrSpy).not.toHaveBeenCalled();
 	});
 
 	it('should update progress with update method', () => {
@@ -42,6 +43,7 @@ describe('ProgressBar', () => {
 	});
 
 	it('should throttle updates based on timeStep', () => {
+		vi.advanceTimersByTime(1000);
 		progressBar.update(10);
 		vi.advanceTimersByTime(500); // half of the time step
 		progressBar.update(20);
@@ -88,17 +90,24 @@ describe('ProgressBar', () => {
 
 	it('should not produce Infinity when two updates land in the same millisecond', () => {
 		// Two qualifying updates with no time advance previously divided by zero.
+		vi.advanceTimersByTime(1000);
 		progressBar.update(10);
+		vi.advanceTimersByTime(1000);
 		progressBar.update(20);
+		// Force a second log inside the same ms by reaching back into the
+		// throttle to bypass the timer guard.
+		progressBar['nextUpdateTime'] = Date.now();
+		progressBar.update(30);
 		const last = stderrSpy.mock.calls[stderrSpy.mock.calls.length - 1][0] as string;
 		expect(last).not.toContain('Infinity');
 	});
 
 	it('should calculate speed and ETA correctly', () => {
+		// First log establishes the baseline for the speed average.
+		vi.advanceTimersByTime(1000);
 		progressBar.update(10);
 		vi.advanceTimersByTime(1000);
 		progressBar.update(20);
-		vi.advanceTimersByTime(1000);
 
 		expect(stderrSpy.mock.calls[stderrSpy.mock.calls.length - 1][0]).toMatch(/20\/100/);
 		expect(stderrSpy.mock.calls[stderrSpy.mock.calls.length - 1][0]).toMatch(/\/s - \d{1,2}:\d{2}:\d{2}/); // ETA format

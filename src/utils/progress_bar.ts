@@ -17,8 +17,10 @@ export class ProgressBar {
 	constructor(total: number, timeStep = 1000) {
 		this.total = total;
 		this.timeStep = timeStep;
-		this.nextUpdateTime = Date.now();
-		this.update(0);
+		// Don't log on construction; wait one timeStep so a script that
+		// constructs and then errors immediately doesn't leave half a line
+		// on the terminal.
+		this.nextUpdateTime = Date.now() + timeStep;
 	}
 
 	private log() {
