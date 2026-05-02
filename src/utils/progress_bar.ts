@@ -84,8 +84,13 @@ export class ProgressBar {
 		this.update(this.index + value);
 	}
 
-	public close() {
-		this.index = this.total;
+	/**
+	 * Finalizes the bar. Pass `success: false` to keep the actual progress
+	 * value instead of forcing it to 100%, which is the right call when the
+	 * underlying work failed mid-flight.
+	 */
+	public close(success = true) {
+		if (success) this.index = this.total;
 		this.log();
 		process.stderr.write(`\n`);
 	}

@@ -62,6 +62,13 @@ describe('ProgressBar', () => {
 		expect(stderrSpy.mock.calls[stderrSpy.mock.calls.length - 1][0]).toStrictEqual('\n');
 	});
 
+	it('should keep the actual progress value when close(false) is called', () => {
+		progressBar.update(37);
+		progressBar.close(false);
+		expect(progressBar['index']).toBe(37);
+		expect(stderrSpy.mock.calls[stderrSpy.mock.calls.length - 2][0]).toContain('37/100');
+	});
+
 	it('should limit previousStates array to MAX_STATES', () => {
 		for (let i = 0; i < 35; i++) {
 			progressBar.update(i + 1);
