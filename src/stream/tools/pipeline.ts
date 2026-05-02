@@ -59,17 +59,34 @@ export function pipeline<A, B, C, D, E, F, G, H, I>(
 export function pipeline(r: R, ...w: (T | W)[]): Promise<void>;
 
 export function pipeline(r: R, ...w: (T | W)[]): Promise<void> {
-	let stream: WFReadable | WFTransform = wrapRead(r);
+	const read = wrapRead(r);
 	const write = wrapWrite(w.pop() as W);
+	const transforms = w.map((t) => wrapTransform(t as T));
 
-	for (const transform of w) {
-		stream = stream.pipe(wrapTransform(transform as T));
+	let stream: WFReadable | WFTransform = read;
+	for (const transform of transforms) {
+		stream = stream.pipe(transform);
 	}
-
 	stream.pipe(write);
 
 	return new Promise((resolve, reject) => {
-		write.inner.on('finish', resolve);
-		write.inner.on('error', reject);
+		let settled = false;
+		const fail = (err: Error) => {
+			if (settled) return;
+			settled = true;
+			reject(err);
+		};
+		const done = () => {
+			if (settled) return;
+			settled = true;
+			resolve();
+		};
+
+		// Attach an error listener to every stage so a failure mid-pipeline
+		// rejects instead of hanging on the writable's never-fired 'finish'.
+		read.inner.on('error', fail);
+		for (const t of transforms) t.inner.on('error', fail);
+		write.inner.on('error', fail);
+		write.inner.on('finish', done);
 	});
 }

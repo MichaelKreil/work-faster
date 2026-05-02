@@ -72,6 +72,28 @@ describe('pipeline', () => {
 		expect(output).toEqual(['ASYNC1', 'ASYNC2', 'ASYNC3']);
 	});
 
+	it('should reject when an intermediate transform errors', async () => {
+		const writes: unknown[] = [];
+		const writable = new Writable({
+			objectMode: true,
+			write(chunk, _enc, cb) {
+				writes.push(chunk);
+				cb();
+			},
+		});
+
+		await expect(
+			pipeline(
+				['a', 'b', 'c'],
+				(x: string) => x.toUpperCase(),
+				() => {
+					throw new Error('middle blew up');
+				},
+				writable,
+			),
+		).rejects.toThrow('middle blew up');
+	});
+
 	it('should handle a pipeline with synchronous iterable as readable input', async () => {
 		const iterable = ['iterable1', 'iterable2', 'iterable3'];
 
