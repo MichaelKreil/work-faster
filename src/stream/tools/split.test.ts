@@ -32,6 +32,13 @@ describe('split', () => {
 		const results = await toArray(input.pipe(split(/\0/, 'utf16le')));
 		expect(results).toEqual(['line1', 'line2', 'line3']);
 	});
+
+	it('should error when a line exceeds maxLineSize on the slow path', async () => {
+		// Regex delimiter forces splitSlow; large delimiter-free chunk trips the cap.
+		const big = Buffer.alloc(2 * 1024 * 1024, 0x41);
+		const input = fromValue(big);
+		await expect(toArray(input.pipe(split(/X+/, 'utf8', 1024 * 1024)))).rejects.toThrow(/exceeded max size/);
+	});
 });
 
 describe('splitLines', () => {

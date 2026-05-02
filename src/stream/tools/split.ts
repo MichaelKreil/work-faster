@@ -13,19 +13,24 @@ const MAX_LINE_SIZE = 256 * 1024 * 1024;
 export function split(
 	delimiter: number | string | RegExp = '\n',
 	format: BufferEncoding = 'utf8',
+	maxLineSize: number = MAX_LINE_SIZE,
 ): WFTransform<Buffer, string> {
-	if (delimiter == null) return splitFast(10, format);
+	if (delimiter == null) return splitFast(10, format, maxLineSize);
 	if (typeof delimiter == 'string' && delimiter.length == 1 && delimiter.charCodeAt(0) < 127) {
-		return splitFast(delimiter.charCodeAt(0), format);
+		return splitFast(delimiter.charCodeAt(0), format, maxLineSize);
 	}
 	if (typeof delimiter == 'number') {
 		if (delimiter >= 127) throw new Error('numeric matcher must be < 127');
-		return splitFast(delimiter, format);
+		return splitFast(delimiter, format, maxLineSize);
 	}
-	return splitSlow(delimiter, format);
+	return splitSlow(delimiter, format, maxLineSize);
 }
 
-function splitSlow(matcher: string | RegExp = '\n', format: BufferEncoding = 'utf8'): WFTransform<Buffer, string> {
+function splitSlow(
+	matcher: string | RegExp = '\n',
+	format: BufferEncoding = 'utf8',
+	maxLineSize: number = MAX_LINE_SIZE,
+): WFTransform<Buffer, string> {
 	let last = '';
 	const decoder = new StringDecoder(format);
 
@@ -33,12 +38,15 @@ function splitSlow(matcher: string | RegExp = '\n', format: BufferEncoding = 'ut
 		new Transform({
 			autoDestroy: true,
 			readableObjectMode: true,
-			transform: function (chunk: string, enc: BufferEncoding, cb: () => void) {
+			transform: function (chunk: string, enc: BufferEncoding, cb: (err?: Error) => void) {
 				last += decoder.write(chunk);
 				const lines = last.split(matcher);
 				const lastIndex = lines.length - 1;
 				for (let i = 0; i < lastIndex; i++) this.push(lines[i]);
 				last = lines[lastIndex];
+				if (last.length > maxLineSize) {
+					return cb(new Error(`split: line exceeded max size of ${maxLineSize} chars without a delimiter`));
+				}
 				cb();
 			},
 			flush: function (cb: () => void) {
