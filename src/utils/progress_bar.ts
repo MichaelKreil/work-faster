@@ -34,7 +34,7 @@ export class ProgressBar {
 			while (previousStates.length > MAX_STATES) previousStates.pop();
 		}
 
-		if (lastState.index < index) {
+		if (lastState.index < index && lastState.time < time) {
 			const speed = (1000 * (index - lastState.index)) / (time - lastState.time);
 			let speedString;
 			if (speed >= 1e6) {

@@ -67,6 +67,14 @@ describe('ProgressBar', () => {
 		expect(progressBar['previousStates'].length).toBeLessThanOrEqual(30); // MAX_STATES
 	});
 
+	it('should not produce Infinity when two updates land in the same millisecond', () => {
+		// Two qualifying updates with no time advance previously divided by zero.
+		progressBar.update(10);
+		progressBar.update(20);
+		const last = stderrSpy.mock.calls[stderrSpy.mock.calls.length - 1][0] as string;
+		expect(last).not.toContain('Infinity');
+	});
+
 	it('should calculate speed and ETA correctly', () => {
 		progressBar.update(10);
 		vi.advanceTimersByTime(1000);
