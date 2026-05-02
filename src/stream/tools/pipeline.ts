@@ -69,11 +69,22 @@ export function pipeline(r: R, ...w: (T | W)[]): Promise<void> {
 	}
 	stream.pipe(write);
 
+	const allStages = [read.inner, ...transforms.map((t) => t.inner), write.inner];
+
 	return new Promise((resolve, reject) => {
 		let settled = false;
+		const teardown = (err?: Error) => {
+			// Destroy every stage that's still alive so a failure does not
+			// leak file handles, child processes, or HTTP connections that
+			// the surviving stages were holding.
+			for (const stage of allStages) {
+				if (!stage.destroyed) stage.destroy(err);
+			}
+		};
 		const fail = (err: Error) => {
 			if (settled) return;
 			settled = true;
+			teardown(err);
 			reject(err);
 		};
 		const done = () => {
@@ -84,9 +95,7 @@ export function pipeline(r: R, ...w: (T | W)[]): Promise<void> {
 
 		// Attach an error listener to every stage so a failure mid-pipeline
 		// rejects instead of hanging on the writable's never-fired 'finish'.
-		read.inner.on('error', fail);
-		for (const t of transforms) t.inner.on('error', fail);
-		write.inner.on('error', fail);
+		for (const stage of allStages) stage.on('error', fail);
 		write.inner.on('finish', done);
 	});
 }

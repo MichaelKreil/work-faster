@@ -72,6 +72,34 @@ describe('pipeline', () => {
 		expect(output).toEqual(['ASYNC1', 'ASYNC2', 'ASYNC3']);
 	});
 
+	it('should destroy surviving stages when one fails', async () => {
+		// An infinite source that won't end naturally - relies on teardown.
+		const readable = new Readable({
+			read() {
+				this.push('chunk');
+			},
+		});
+		const slowTransform = new Transform({
+			objectMode: true,
+			transform(chunk, _enc, cb) {
+				cb(null, chunk);
+			},
+		});
+		const writable = new Writable({
+			objectMode: true,
+			write(_chunk, _enc, cb) {
+				cb(new Error('writable failed'));
+			},
+		});
+
+		await expect(pipeline(readable, slowTransform, writable)).rejects.toThrow('writable failed');
+
+		// All stages should be destroyed so resources can be reclaimed.
+		expect(readable.destroyed).toBe(true);
+		expect(slowTransform.destroyed).toBe(true);
+		expect(writable.destroyed).toBe(true);
+	});
+
 	it('should reject when an intermediate transform errors', async () => {
 		const writes: unknown[] = [];
 		const writable = new Writable({
