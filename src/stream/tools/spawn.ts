@@ -9,6 +9,7 @@ export function spawn(command: string, args: string[]): WFTransform<Buffer, Buff
 
 	let pendingError: Error | null = null;
 	let exited = false;
+	let stdinClosed = false;
 	const stderrChunks: Buffer[] = [];
 	let onClose: (() => void) | null = null;
 
@@ -20,9 +21,16 @@ export function spawn(command: string, args: string[]): WFTransform<Buffer, Buff
 		autoDestroy: true,
 		transform(chunk, encoding, cb) {
 			if (pendingError) return cb(pendingError);
+			// If the child already closed stdin (EPIPE-style early exit), keep
+			// draining the source quietly - the exit code decides the outcome.
+			if (stdinClosed) return cb();
 			// Wait for stdin's write callback so we honor its high-water mark.
 			cp.stdin.write(chunk, encoding, (err) => {
 				if (err) {
+					if ((err as NodeJS.ErrnoException).code === 'EPIPE') {
+						stdinClosed = true;
+						return cb();
+					}
 					setError(err);
 					cb(err);
 				} else {
@@ -35,7 +43,7 @@ export function spawn(command: string, args: string[]): WFTransform<Buffer, Buff
 				if (pendingError) cb(pendingError);
 				else cb();
 			};
-			cp.stdin.end();
+			if (!stdinClosed) cp.stdin.end();
 			if (exited) finish();
 			else onClose = finish;
 		},

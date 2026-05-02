@@ -34,6 +34,15 @@ describe('spawn', () => {
 		);
 	});
 
+	it('should complete cleanly when the child closes stdin early (EPIPE)', async () => {
+		// `head -c 1` reads one byte and exits, leaving us writing into a
+		// closed stdin. The transform should swallow the resulting EPIPE
+		// and complete with whatever the child emitted.
+		const big = Buffer.alloc(2 * 1024 * 1024, 0x41); // 2 MB of 'A'
+		const result = await toString(fromValue(big.toString()).pipe(spawn('head', ['-c', '1'])));
+		expect(result).toBe('A');
+	});
+
 	it('should fail when the child is killed by a signal', async () => {
 		// `kill -TERM $$` makes the shell terminate itself before exiting.
 		await expect(toString(fromValue('').pipe(spawn('sh', ['-c', 'kill -TERM $$'])))).rejects.toThrow(
