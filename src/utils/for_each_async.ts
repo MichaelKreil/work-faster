@@ -2,9 +2,14 @@ import os from 'node:os';
 
 /**
  * Iterates over items in parallel, invoking a callback for each item.
+ *
  * @param items - The items to iterate over (array, iterable, or async iterable)
  * @param callback - Async function called for each item with the item and its index
- * @param maxParallel - Maximum concurrent operations (defaults to CPU count)
+ * @param maxParallel - Maximum concurrent operations. Defaults to `os.cpus().length`,
+ *   which is appropriate for CPU-bound work. **For I/O-bound work (HTTP requests,
+ *   disk reads, database queries) the CPU count is the wrong axis - the optimal
+ *   parallelism is dictated by the remote service's capacity, not local cores.
+ *   Pass an explicit value (e.g. 32 or 100) in those cases.**
  */
 export function forEachAsync<I>(
 	items: Iterable<I> | AsyncIterable<I> | Iterator<I> | AsyncIterator<I> | IterableIterator<I>,
