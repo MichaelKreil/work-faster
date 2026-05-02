@@ -80,11 +80,15 @@ export function spawn(command: string, args: string[]): WFTransform<Buffer, Buff
 		}
 	});
 
-	cp.on('close', (code) => {
+	cp.on('close', (code, signal) => {
 		exited = true;
-		if (code !== 0 && code !== null) {
-			const stderrText = Buffer.concat(stderrChunks).toString().trim();
-			const detail = stderrText ? `: ${stderrText}` : '';
+		const stderrText = Buffer.concat(stderrChunks).toString().trim();
+		const detail = stderrText ? `: ${stderrText}` : '';
+		if (signal !== null) {
+			// code is null when the child was terminated by a signal; treating
+			// that as a successful exit silently swallows kill/SIGTERM/etc.
+			setError(new Error(`Process killed by signal ${signal}${detail}`));
+		} else if (code !== 0 && code !== null) {
 			setError(new Error(`Process exited with code ${code}${detail}`));
 		}
 		if (onClose) {

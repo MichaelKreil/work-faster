@@ -33,4 +33,11 @@ describe('spawn', () => {
 			/Process exited with code 3.*boom/s,
 		);
 	});
+
+	it('should fail when the child is killed by a signal', async () => {
+		// `kill -TERM $$` makes the shell terminate itself before exiting.
+		await expect(toString(fromValue('').pipe(spawn('sh', ['-c', 'kill -TERM $$'])))).rejects.toThrow(
+			/Process killed by signal SIGTERM/,
+		);
+	});
 });
