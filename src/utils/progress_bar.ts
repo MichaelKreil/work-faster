@@ -68,9 +68,13 @@ export class ProgressBar {
 
 	public update(value: number) {
 		this.index = value;
-		if (Date.now() >= this.nextUpdateTime) {
+		const now = Date.now();
+		if (now >= this.nextUpdateTime) {
 			this.log();
-			this.nextUpdateTime += this.timeStep;
+			// Anchor on now (not previous nextUpdateTime) so a long pause
+			// between updates does not produce a burst of stderr writes
+			// once updates resume.
+			this.nextUpdateTime = now + this.timeStep;
 		}
 	}
 

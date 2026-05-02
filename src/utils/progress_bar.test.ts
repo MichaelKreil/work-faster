@@ -68,6 +68,24 @@ describe('ProgressBar', () => {
 		expect(progressBar['previousStates'].length).toBeLessThanOrEqual(30); // MAX_STATES
 	});
 
+	it('should not burst-log after a pause longer than timeStep', () => {
+		// Initial constructor log + one log after the first timeStep.
+		vi.advanceTimersByTime(1000);
+		progressBar.update(10);
+		const baseline = stderrSpy.mock.calls.length;
+
+		// Simulate a long pause where update is not called.
+		vi.advanceTimersByTime(10_000);
+
+		// Five quick updates after the pause should produce one log, not five.
+		progressBar.update(11);
+		progressBar.update(12);
+		progressBar.update(13);
+		progressBar.update(14);
+		progressBar.update(15);
+		expect(stderrSpy.mock.calls.length).toBe(baseline + 1);
+	});
+
 	it('should not produce Infinity when two updates land in the same millisecond', () => {
 		// Two qualifying updates with no time advance previously divided by zero.
 		progressBar.update(10);
