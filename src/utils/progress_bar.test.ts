@@ -109,6 +109,14 @@ describe('ProgressBar', () => {
 		expect(last).not.toContain('Infinity');
 	});
 
+	it('should not emit NaN for a zero total', () => {
+		const bar = new ProgressBar(0, 1000);
+		bar.close();
+		const calls = stderrSpy.mock.calls.map((c) => String(c[0])).join('');
+		expect(calls).not.toContain('NaN');
+		expect(calls).toContain('0/0 - 100.00 %');
+	});
+
 	it('should calculate speed and ETA correctly', () => {
 		// First log establishes the baseline for the speed average.
 		vi.advanceTimersByTime(1000);

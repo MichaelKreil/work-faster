@@ -26,7 +26,9 @@ export class ProgressBar {
 	private log() {
 		const { index, total, previousStates, MAX_STATES } = this;
 		const time = Date.now();
-		const progress = (100 * index) / total;
+		// A non-positive total has no meaningful percentage; treat it as complete
+		// (100%) instead of emitting `NaN %`.
+		const progress = total > 0 ? (100 * index) / total : 100;
 		let message = `\r\x1b[K   ${index}/${total} - ${progress.toFixed(2)} %`;
 
 		const newState: ProgressState = { index, time };
