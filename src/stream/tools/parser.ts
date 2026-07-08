@@ -33,16 +33,20 @@ export function parser(format: 'csv' | 'tsv'): WFTransform<Buffer | string, Reco
 export function parser(format: 'ndjson'): WFTransform<Buffer | string, unknown>;
 export function parser(format: 'lines'): WFTransform<Buffer | string, string>;
 export function parser(format: Format): WFTransform<Buffer | string, Record<string, unknown> | string | unknown> {
-	const transform = split().merge(skipEmptyLines());
+	const lines = split();
 	switch (format) {
+		// Empty lines are dropped only for the structured formats, where a blank
+		// line carries no record and would otherwise break parsing. For 'lines'
+		// the raw text (including empty lines) is preserved so line positions and
+		// blank-line semantics are not silently lost.
 		case 'csv':
-			return transform.merge(parseCSV());
+			return lines.merge(skipEmptyLines()).merge(parseCSV());
 		case 'tsv':
-			return transform.merge(parseCSV('\t'));
+			return lines.merge(skipEmptyLines()).merge(parseCSV('\t'));
 		case 'ndjson':
-			return transform.merge(parseNDJSON());
+			return lines.merge(skipEmptyLines()).merge(parseNDJSON());
 		case 'lines':
-			return transform;
+			return lines;
 	}
 	throw new Error(`Unknown format: ${format}`);
 }

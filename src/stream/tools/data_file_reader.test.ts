@@ -110,6 +110,12 @@ describe('readDataFile', () => {
 		}
 	});
 
+	it('should preserve empty lines when reading the lines format', async () => {
+		await mockSource('l1\n\nl2\nl3\n');
+		const reader = await readDataFile('file.txt', { format: 'lines' });
+		expect(await toArray(reader)).toStrictEqual(['l1', '', 'l2', 'l3']);
+	});
+
 	it('should handle files with unknown format gracefully', async () => {
 		await expect(
 			readDataFile('file.unknown', {

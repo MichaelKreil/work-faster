@@ -66,8 +66,12 @@ describe('parser', () => {
 			expect(await process('line1\nline2\nline3\n', parser('lines'))).toEqual(result);
 		});
 
-		it('should handle empty lines gracefully', async () => {
-			expect(await process('line1\n\nline2\nline3\n\n', parser('lines'))).toEqual(result);
+		it('should preserve empty lines instead of dropping them', async () => {
+			expect(await process('line1\n\nline2\nline3\n', parser('lines'))).toEqual(['line1', '', 'line2', 'line3']);
+		});
+
+		it('should preserve a trailing empty line produced by a final blank line', async () => {
+			expect(await process('line1\n\n', parser('lines'))).toEqual(['line1', '']);
 		});
 
 		it('should handle an empty stream', async () => {
