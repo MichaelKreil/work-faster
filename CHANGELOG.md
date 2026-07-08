@@ -35,6 +35,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   produce a stderr burst, and stop writing from the constructor.
 - **compress:** `compress('none')` now uses a byte-mode passthrough so it
   composes with byte-mode peers.
+- **for-each-async:** reject with a `RangeError` when `maxParallel` is not a
+  positive integer (`0`, negative, or fractional) instead of silently
+  resolving without processing any item. Applies to `mapAsync` too.
+- **stream:** `WFTransform`/`WFWritable` `write()` and `end()` now reject on
+  stream errors instead of hanging forever when the underlying stream errors
+  during backpressure (or is already destroyed/ended); listeners are cleaned
+  up on settle.
+- **parser:** `format: 'lines'` (and `readDataFile`) now preserves empty lines
+  instead of silently dropping them; empty-line skipping is kept only for the
+  structured `csv`/`tsv`/`ndjson` formats.
+- **progress-bar:** render `100.00 %` instead of `NaN %` for a non-positive
+  `total`.
+- **data-file-reader:** finalize the progress bar exactly once on the source's
+  `error` (with `close(false)`) as well as `end`, so a failed read no longer
+  leaves a dangling terminal line.
+
+### Types
+
+- **stream:** `WFTransform<I,O>.write()` / `WFWritable<I>.write()` now accept
+  the input type `I` instead of a hardcoded `Buffer`, so object-mode writes are
+  typed correctly. Byte-consuming transforms (`split`, `spawn`, `compress`,
+  `decompress`) widen their input type to `Buffer | string` (contravariant,
+  non-breaking) so string sources compose without casts.
 
 ### Build / CI
 
@@ -48,6 +71,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Align `readDataFile` JSDoc and the README with actual format names
   (`csv`, `ndjson`) and the synchronous `compress`/`decompress` API.
+- **parser:** document that CSV/TSV parsing is a naive line/separator split
+  (not RFC 4180) and does not support quoted fields, escaped quotes, or
+  separators/newlines embedded in values.
 
 ## [2.5.7] - 2026-04-02
 
