@@ -5,8 +5,8 @@
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.build.json",
     "check": "npm run format && npm run lint && npm run typecheck && npm run build && npm run test",
-    "format": "prettier --check .",
-    "format:fix": "prettier --write .",
+    "format:check": "prettier --check .",
+    "format": "prettier --write .",
     "lint": "eslint . --color",
     "prepack": "npm run build",
     "release": "vrt release-npm",
