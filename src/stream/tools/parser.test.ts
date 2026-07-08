@@ -32,6 +32,13 @@ describe('parser', () => {
 		it('should handle empty rows gracefully', async () => {
 			expect(await process('name,age\nAlice,30\n\nBob,25\n', parser('csv'))).toEqual(result);
 		});
+
+		it('splits quoted fields verbatim (documents the naive, non-RFC-4180 behavior)', async () => {
+			// A quoted value containing the separator is NOT treated as one field:
+			// the quotes are kept and the embedded comma still splits, so the extra
+			// column past the header is dropped. This pins the documented limitation.
+			expect(await process('name,note\nAlice,"a,b"\n', parser('csv'))).toEqual([{ name: 'Alice', note: '"a' }]);
+		});
 	});
 
 	describe('TSV parser', () => {

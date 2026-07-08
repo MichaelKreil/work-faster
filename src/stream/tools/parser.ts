@@ -7,11 +7,18 @@ import { skipEmptyLines } from './skip.js';
 /**
  * Parses the content of a stream based on the specified format.
  *
+ * **CSV/TSV limitations:** parsing is line- and separator-based only. Quoted
+ * fields (`"a,b"`), escaped quotes (`""`), and values containing the separator
+ * or embedded newlines are **not** supported - each physical line is split
+ * verbatim on the separator. This keeps parsing fast and streaming, but is not
+ * RFC 4180 compliant. If your data uses quoting/escaping, use a dedicated CSV
+ * parser instead.
+ *
  * @param format - The format of the data to parse:
- * - `'csv'`: Parses the input as CSV.
- * - `'tsv'`: Parses the input as tab-separated values.
+ * - `'csv'`: Parses the input as CSV (naive split, see limitations above).
+ * - `'tsv'`: Parses the input as tab-separated values (naive split, see limitations above).
  * - `'ndjson'`: Parses the input as newline-delimited JSON (NDJSON).
- * - `'lines'`: Treats each line of the input as a separate string.
+ * - `'lines'`: Treats each line of the input as a separate string (empty lines preserved).
  * @param stream - A readable stream containing the input data.
  * @returns An async iterable yielding parsed data:
  * - For `'csv'` and `'tsv'`: Objects representing rows of data.
@@ -54,8 +61,13 @@ export function parser(format: Format): WFTransform<Buffer | string, Record<stri
 /**
  * Parses a stream as CSV, assuming the first line is a header row.
  *
- * @param stream - A readable stream containing CSV data.
- * @param separator - The column separator. Defaults to autodetection based on the input.
+ * **Naive split - not RFC 4180.** Each line is split verbatim on the separator;
+ * quoted fields, escaped quotes, and separators/newlines embedded in values are
+ * not handled. Extra columns beyond the header are dropped and missing columns
+ * become `undefined`.
+ *
+ * @param separator - The column separator. Defaults to autodetection (the
+ *   candidate among `,`, `;`, `\t` that yields the most columns on the header).
  * @returns An async iterable yielding objects representing rows of data.
  *
  * @example
