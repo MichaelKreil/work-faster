@@ -1,6 +1,8 @@
+import { Readable } from 'node:stream';
 import { fromValue, toArray, toBuffer } from './utils.js';
 import { Compression, Format } from '../types.js';
 import { compress } from './compress.js';
+import { WFReadable } from '../classes.js';
 
 // Mock dependencies
 vi.mock('./read.js', () => ({
@@ -114,6 +116,19 @@ describe('readDataFile', () => {
 		await mockSource('l1\n\nl2\nl3\n');
 		const reader = await readDataFile('file.txt', { format: 'lines' });
 		expect(await toArray(reader)).toStrictEqual(['l1', '', 'l2', 'l3']);
+	});
+
+	it('should finalize the progress bar when the source stream errors', async () => {
+		vi.clearAllMocks();
+		const errorStream = new Readable({ read() {} });
+		vi.mocked(read).mockResolvedValue({ stream: new WFReadable(errorStream), size: 100 });
+
+		await readDataFile('file.txt', { progress: true, format: 'lines' });
+		errorStream.emit('error', new Error('boom'));
+
+		// close(false) keeps the partial value and terminates the terminal line.
+		expect(mockProgressBarClose).toHaveBeenCalledTimes(1);
+		expect(mockProgressBarClose).toHaveBeenCalledWith(false);
 	});
 
 	it('should handle files with unknown format gracefully', async () => {

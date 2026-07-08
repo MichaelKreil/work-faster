@@ -95,11 +95,21 @@ export async function readDataFile(
 	if (progress && size) {
 		const progressBar = new ProgressBar(size);
 		let pos = 0;
+		let finalized = false;
+		// Finalize exactly once. On error close with success=false so the bar
+		// keeps the actual (partial) progress instead of jumping to 100%, and so
+		// the terminal line is terminated rather than left dangling.
+		const finalize = (success: boolean) => {
+			if (finalized) return;
+			finalized = true;
+			progressBar.close(success);
+		};
 		stream.inner.on('data', (chunk: Buffer) => {
 			pos += chunk.length;
 			progressBar.update(pos);
 		});
-		stream.inner.on('end', () => progressBar.close());
+		stream.inner.on('end', () => finalize(true));
+		stream.inner.on('error', () => finalize(false));
 	}
 
 	// Decompress the stream if needed
