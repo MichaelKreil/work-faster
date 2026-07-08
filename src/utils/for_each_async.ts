@@ -9,13 +9,18 @@ import os from 'node:os';
  *   which is appropriate for CPU-bound work. **For I/O-bound work (HTTP requests,
  *   disk reads, database queries) the CPU count is the wrong axis - the optimal
  *   parallelism is dictated by the remote service's capacity, not local cores.
- *   Pass an explicit value (e.g. 32 or 100) in those cases.**
+ *   Pass an explicit value (e.g. 32 or 100) in those cases.** Must be a positive
+ *   integer when provided; `0` or a negative value rejects rather than silently
+ *   processing nothing.
  */
 export function forEachAsync<I>(
 	items: Iterable<I> | AsyncIterable<I> | Iterator<I> | AsyncIterator<I> | IterableIterator<I>,
 	callback: (item: I, index: number) => Promise<void>,
 	maxParallel?: number,
 ): Promise<void> {
+	if (maxParallel !== undefined && (!Number.isInteger(maxParallel) || maxParallel < 1)) {
+		return Promise.reject(new RangeError(`maxParallel must be a positive integer, got ${maxParallel}`));
+	}
 	const concurrency = maxParallel ?? os.cpus().length;
 	const iterator = getIterator(items);
 	let index = 0;

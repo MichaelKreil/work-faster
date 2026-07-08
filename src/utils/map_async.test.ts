@@ -41,6 +41,13 @@ describe('mapAsync', () => {
 		expect(maxConcurrentTasks).toBeLessThanOrEqual(maxParallel);
 	});
 
+	it('should reject when maxParallel is zero instead of returning an empty array', async () => {
+		const callback = vi.fn(async (item: number) => item * 2);
+
+		await expect(mapAsync([1, 2, 3, 4], callback, 0)).rejects.toThrow(RangeError);
+		expect(callback).not.toHaveBeenCalled();
+	});
+
 	it('should work with async generators', async () => {
 		async function* asyncGenerator() {
 			yield 1;

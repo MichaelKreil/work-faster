@@ -23,6 +23,36 @@ describe('forEachAsync', () => {
 		expect(callback).not.toHaveBeenCalled();
 	});
 
+	it('should reject when maxParallel is zero without processing any item', async () => {
+		const callback = vi.fn(async () => {});
+
+		await expect(forEachAsync([1, 2, 3, 4], callback, 0)).rejects.toThrow(RangeError);
+		expect(callback).not.toHaveBeenCalled();
+	});
+
+	it('should reject when maxParallel is negative without processing any item', async () => {
+		const callback = vi.fn(async () => {});
+
+		await expect(forEachAsync([1, 2, 3, 4], callback, -1)).rejects.toThrow(RangeError);
+		expect(callback).not.toHaveBeenCalled();
+	});
+
+	it('should reject when maxParallel is not an integer', async () => {
+		const callback = vi.fn(async () => {});
+
+		await expect(forEachAsync([1, 2, 3, 4], callback, 2.5)).rejects.toThrow(RangeError);
+		expect(callback).not.toHaveBeenCalled();
+	});
+
+	it('should process every item when maxParallel is 1 (serial)', async () => {
+		const list = [1, 2, 3, 4];
+		const seen: number[] = [];
+
+		await forEachAsync(list, async (item) => void seen.push(item), 1);
+
+		expect(seen).toEqual(list);
+	});
+
 	it('should respect the maxParallel limit', async () => {
 		const list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 		const maxParallel = 2;
