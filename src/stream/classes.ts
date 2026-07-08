@@ -2,6 +2,81 @@ import { Duplex, Readable, Transform, Writable } from 'node:stream';
 import { merge } from './tools/merge.js';
 
 /**
+ * Writes a chunk to a writable/duplex stream, honoring backpressure and
+ * settling on stream errors. Without the error handling, a write that is
+ * backpressured (write() returned false) would wait forever on a 'drain' that
+ * never fires once the stream has errored, deadlocking the caller.
+ */
+function writeToInner(inner: Writable, content: unknown): Promise<void> {
+	return new Promise((resolve, reject) => {
+		if (inner.destroyed || inner.writableEnded) {
+			reject(new Error('Cannot write to a stream that has been destroyed or ended'));
+			return;
+		}
+
+		let settled = false;
+		const onDrain = () => {
+			if (settled) return;
+			settled = true;
+			inner.removeListener('error', onError);
+			resolve();
+		};
+		const onError = (err: Error) => {
+			if (settled) return;
+			settled = true;
+			inner.removeListener('drain', onDrain);
+			reject(err ?? new Error('Stream error during write'));
+		};
+
+		inner.once('error', onError);
+		let flushed: boolean;
+		try {
+			flushed = inner.write(content, (err) => {
+				if (err) onError(err);
+			});
+		} catch (err) {
+			onError(err instanceof Error ? err : new Error(String(err)));
+			return;
+		}
+
+		if (flushed) {
+			if (settled) return;
+			settled = true;
+			inner.removeListener('error', onError);
+			resolve();
+		} else {
+			inner.once('drain', onDrain);
+		}
+	});
+}
+
+/**
+ * Ends a writable/duplex stream and resolves once it has finished. Attaches an
+ * error listener so that a stream which errors before emitting 'finish' rejects
+ * instead of hanging on a callback that never fires.
+ */
+function endInner(inner: Writable): Promise<void> {
+	return new Promise((resolve, reject) => {
+		if (inner.writableFinished) return resolve();
+		if (inner.destroyed) return reject(new Error('Cannot end a stream that has been destroyed'));
+
+		let settled = false;
+		const onError = (err: Error) => {
+			if (settled) return;
+			settled = true;
+			reject(err ?? new Error('Stream error during end'));
+		};
+		inner.once('error', onError);
+		inner.end(() => {
+			if (settled) return;
+			settled = true;
+			inner.removeListener('error', onError);
+			resolve();
+		});
+	});
+}
+
+/**
  * Wrapper around Node.js Readable stream with typed output and chainable pipe/merge methods.
  */
 export class WFReadable<O = unknown> {
@@ -66,25 +141,14 @@ export class WFTransform<I = unknown, O = I> {
 		return this.inner[Symbol.asyncIterator]();
 	}
 
-	// Write method that respects backpressure
+	// Write method that respects backpressure and rejects on stream errors
 	write(content: Buffer): Promise<void> {
-		return new Promise((r) => {
-			if (!this.inner.write(content)) {
-				this.inner.once('drain', r);
-			} else {
-				r();
-			}
-		});
+		return writeToInner(this.inner, content);
 	}
 
 	// End method that finalizes the stream
-	async end(): Promise<void> {
-		return new Promise((resolve, reject) => {
-			this.inner.end((error: Error) => {
-				if (error) reject(error);
-				else resolve();
-			});
-		});
+	end(): Promise<void> {
+		return endInner(this.inner);
 	}
 }
 
@@ -99,24 +163,13 @@ export class WFWritable<_I = unknown> {
 		this.inner = inner;
 	}
 
-	// Write method that respects backpressure
+	// Write method that respects backpressure and rejects on stream errors
 	write(content: Buffer): Promise<void> {
-		return new Promise((r) => {
-			if (!this.inner.write(content)) {
-				this.inner.once('drain', r);
-			} else {
-				r();
-			}
-		});
+		return writeToInner(this.inner, content);
 	}
 
 	// End method that finalizes the stream
-	async end(): Promise<void> {
-		return new Promise((resolve, reject) => {
-			this.inner.end((error: Error) => {
-				if (error) reject(error);
-				else resolve();
-			});
-		});
+	end(): Promise<void> {
+		return endInner(this.inner);
 	}
 }
