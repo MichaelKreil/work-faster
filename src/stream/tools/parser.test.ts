@@ -3,7 +3,7 @@ import { parser } from './parser.js';
 import { WFTransform } from '../classes.js';
 
 describe('parser', () => {
-	async function process(content: string, parser: WFTransform<Buffer, unknown>): Promise<unknown[]> {
+	async function process(content: string, parser: WFTransform<Buffer | string, unknown>): Promise<unknown[]> {
 		return toArray(fromValue(content).merge(parser));
 	}
 

@@ -2,7 +2,7 @@ import child_process from 'node:child_process';
 import { Transform } from 'node:stream';
 import { WFTransform } from '../classes.js';
 
-export function spawn(command: string, args: string[]): WFTransform<Buffer, Buffer> {
+export function spawn(command: string, args: string[]): WFTransform<Buffer | string, Buffer> {
 	const cp = child_process.spawn(command, args, {
 		stdio: ['pipe', 'pipe', 'pipe'],
 	});

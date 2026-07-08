@@ -14,7 +14,7 @@ export function split(
 	delimiter: number | string | RegExp = '\n',
 	format: BufferEncoding = 'utf8',
 	maxLineSize: number = MAX_LINE_SIZE,
-): WFTransform<Buffer, string> {
+): WFTransform<Buffer | string, string> {
 	if (delimiter == null) return splitFast(10, format, maxLineSize);
 	if (typeof delimiter == 'string' && delimiter.length == 1 && delimiter.charCodeAt(0) < 127) {
 		return splitFast(delimiter.charCodeAt(0), format, maxLineSize);
@@ -30,7 +30,7 @@ function splitSlow(
 	matcher: string | RegExp = '\n',
 	format: BufferEncoding = 'utf8',
 	maxLineSize: number = MAX_LINE_SIZE,
-): WFTransform<Buffer, string> {
+): WFTransform<Buffer | string, string> {
 	let last = '';
 	const decoder = new StringDecoder(format);
 
@@ -61,7 +61,7 @@ export function splitFast(
 	code: number = 10,
 	format: BufferEncoding = 'utf8',
 	maxLineSize: number = MAX_LINE_SIZE,
-): WFTransform<Buffer, string> {
+): WFTransform<Buffer | string, string> {
 	let bufferChunks: Buffer[] = [];
 	let accumulatedSize = 0;
 	let lastChunk = Buffer.alloc(0);
@@ -125,7 +125,7 @@ export async function* asLines(
 	delimiter?: string | RegExp | number,
 	format: BufferEncoding = 'utf8',
 ): AsyncGenerator<string> {
-	let splitter: WFTransform<Buffer, string>;
+	let splitter: WFTransform<Buffer | string, string>;
 	if (delimiter == null) {
 		splitter = splitFast(10, format);
 	} else if (typeof delimiter == 'string' && delimiter.length == 1 && delimiter.charCodeAt(0) < 127) {

@@ -7,7 +7,7 @@ import { WFTransform } from '../classes.js';
 
 // 'none' is a byte-mode passthrough so it composes with byte-mode
 // compressors instead of switching the pipeline into object mode.
-function bytePassThrough(): WFTransform<Buffer, Buffer> {
+function bytePassThrough(): WFTransform<Buffer | string, Buffer> {
 	return wrapTransform(new PassThrough());
 }
 
@@ -55,7 +55,7 @@ function checkLevel(type: Exclude<Compression, 'none'>, level: number | undefine
  * const decompressStream = decompress('gzip');
  * sourceStream.pipe(decompressStream).pipe(destinationStream);
  */
-export function decompress(type: Compression): WFTransform<Buffer, Buffer> {
+export function decompress(type: Compression): WFTransform<Buffer | string, Buffer> {
 	switch (type) {
 		case 'brotli':
 			return wrapTransform(createBrotliDecompress());
@@ -97,7 +97,7 @@ export function decompress(type: Compression): WFTransform<Buffer, Buffer> {
  * const compressStream = compress('brotli', { level: 9 });
  * sourceStream.pipe(compressStream).pipe(destinationStream);
  */
-export function compress(type: Compression, options: CompressOptions = {}): WFTransform<Buffer, Buffer> {
+export function compress(type: Compression, options: CompressOptions = {}): WFTransform<Buffer | string, Buffer> {
 	const { level } = options;
 	if (type !== 'none') checkLevel(type, level);
 

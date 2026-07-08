@@ -142,7 +142,7 @@ export class WFTransform<I = unknown, O = I> {
 	}
 
 	// Write method that respects backpressure and rejects on stream errors
-	write(content: Buffer): Promise<void> {
+	write(content: I): Promise<void> {
 		return writeToInner(this.inner, content);
 	}
 
@@ -155,7 +155,7 @@ export class WFTransform<I = unknown, O = I> {
 /**
  * Wrapper around Node.js Writable stream with typed input and backpressure-aware write method.
  */
-export class WFWritable<_I = unknown> {
+export class WFWritable<I = unknown> {
 	readonly type = 'Writable';
 	inner: Writable;
 
@@ -164,7 +164,7 @@ export class WFWritable<_I = unknown> {
 	}
 
 	// Write method that respects backpressure and rejects on stream errors
-	write(content: Buffer): Promise<void> {
+	write(content: I): Promise<void> {
 		return writeToInner(this.inner, content);
 	}
 

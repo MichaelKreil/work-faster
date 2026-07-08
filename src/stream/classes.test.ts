@@ -77,6 +77,22 @@ describe('WFWritable', () => {
 });
 
 describe('WFTransform', () => {
+	it('should accept the input generic type in write() (not just Buffer)', async () => {
+		// Regression: write() previously hardcoded `Buffer`, so this object-mode
+		// write (and the documented `flatten().write([1,2,3])` example) failed to
+		// compile. Typing here doubles as a compile-time guard.
+		const inner = new PassThrough({ objectMode: true });
+		const t = new WFTransform<{ id: number }, { id: number }>(inner);
+
+		const received: unknown[] = [];
+		inner.on('data', (chunk) => received.push(chunk));
+
+		await t.write({ id: 1 });
+		await t.write({ id: 2 });
+
+		expect(received).toEqual([{ id: 1 }, { id: 2 }]);
+	});
+
 	it('should reject write() when a backpressured transform errors', async () => {
 		const inner = new Transform({
 			highWaterMark: 1,
