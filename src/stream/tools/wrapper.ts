@@ -4,10 +4,7 @@ import { WFReadable, WFTransform, WFWritable } from '../classes.js';
 
 export type WFReadSource<O = unknown> = Readable | Iterable<O> | AsyncIterable<O> | WFReadable<O>;
 export type WFTransformSource<I = unknown, O = I> =
-	| Duplex
-	| ((item: I) => O)
-	| ((item: I) => Promise<O>)
-	| WFTransform<I, O>;
+	Duplex | ((item: I) => O) | ((item: I) => Promise<O>) | WFTransform<I, O>;
 export type WFWriteSource<I = unknown> = Writable | ((item: I) => void) | ((item: I) => Promise<void>) | WFWritable<I>;
 
 export function wrap(inner: ReadStream): WFReadable<Buffer>;
