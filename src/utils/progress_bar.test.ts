@@ -5,16 +5,22 @@ import { ProgressBar } from './progress_bar.js';
 describe('ProgressBar', () => {
 	let progressBar: ProgressBar;
 	let stderrSpy: MockInstance<WriteStream['write']>;
+	const realIsTTY = process.stderr.isTTY;
 
 	beforeEach(() => {
 		vi.useFakeTimers();
 		stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+		// The output style depends on whether stderr is a terminal, and the bar
+		// captures that at construction. Pin it so these tests exercise the
+		// in-place TTY rendering regardless of how the suite is run.
+		process.stderr.isTTY = true;
 		progressBar = new ProgressBar(100, 1000); // total 100, timeStep 1000 ms
 	});
 
 	afterEach(() => {
 		vi.clearAllTimers();
 		vi.restoreAllMocks();
+		process.stderr.isTTY = realIsTTY;
 	});
 
 	it('should initialize with the correct values without writing to stderr', () => {
@@ -115,6 +121,42 @@ describe('ProgressBar', () => {
 		const calls = stderrSpy.mock.calls.map((c) => String(c[0])).join('');
 		expect(calls).not.toContain('NaN');
 		expect(calls).toContain('0/0 - 100.00 %');
+	});
+
+	describe('when stderr is not a terminal', () => {
+		beforeEach(() => {
+			// Node leaves this `undefined` rather than `false` off a terminal;
+			// the bar tests for `=== true`, so both take the same branch.
+			process.stderr.isTTY = false;
+			progressBar = new ProgressBar(100, 1000);
+		});
+
+		it('should not emit cursor-control escapes', () => {
+			vi.advanceTimersByTime(1000);
+			progressBar.update(10);
+			progressBar.close();
+
+			const written = stderrSpy.mock.calls.map((c) => String(c[0])).join('');
+			expect(written).not.toContain('\r');
+			expect(written).not.toContain('\x1b[K');
+		});
+
+		it('should emit newline-terminated lines instead of rewriting one', () => {
+			vi.advanceTimersByTime(1000);
+			progressBar.update(10);
+
+			const last = String(stderrSpy.mock.calls[stderrSpy.mock.calls.length - 1][0]);
+			expect(last).toContain('10/100 - 10.00 %');
+			expect(last.endsWith('\n')).toBe(true);
+		});
+
+		it('should not append a bare newline on close', () => {
+			progressBar.close();
+
+			const calls = stderrSpy.mock.calls.map((c) => String(c[0]));
+			expect(calls[calls.length - 1]).toContain('100/100 - 100.00 %');
+			expect(calls).not.toContain('\n');
+		});
 	});
 
 	it('should calculate speed and ETA correctly', () => {

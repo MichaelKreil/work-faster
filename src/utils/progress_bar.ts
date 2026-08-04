@@ -13,10 +13,14 @@ export class ProgressBar {
 	private readonly total: number;
 	private readonly timeStep: number;
 	private readonly previousStates: ProgressState[] = [];
+	// Cursor-control escapes only mean something on a terminal. Captured once so
+	// the bar keeps a consistent output style for its whole lifetime.
+	private readonly isTTY: boolean;
 
 	constructor(total: number, timeStep = 1000) {
 		this.total = total;
 		this.timeStep = timeStep;
+		this.isTTY = process.stderr.isTTY === true;
 		// Don't log on construction; wait one timeStep so a script that
 		// constructs and then errors immediately doesn't leave half a line
 		// on the terminal.
@@ -29,7 +33,7 @@ export class ProgressBar {
 		// A non-positive total has no meaningful percentage; treat it as complete
 		// (100%) instead of emitting `NaN %`.
 		const progress = total > 0 ? (100 * index) / total : 100;
-		let message = `\r\x1b[K   ${index}/${total} - ${progress.toFixed(2)} %`;
+		let message = `   ${index}/${total} - ${progress.toFixed(2)} %`;
 
 		const newState: ProgressState = { index, time };
 		const lastState: ProgressState = previousStates[previousStates.length - 1] || newState;
@@ -67,7 +71,10 @@ export class ProgressBar {
 			message += ` - ${speedString}/s - ${etaString}`;
 		}
 
-		process.stderr.write(message);
+		// On a terminal the bar is one line rewritten in place. Anywhere else - a
+		// redirected log, a CI job, a file - those escapes are just noise, so the
+		// same information goes out as plain appended lines instead.
+		process.stderr.write(this.isTTY ? `\r\x1b[K${message}` : `${message}\n`);
 	}
 
 	public update(value: number) {
@@ -94,6 +101,7 @@ export class ProgressBar {
 	public close(success = true) {
 		if (success) this.index = this.total;
 		this.log();
-		process.stderr.write(`\n`);
+		// The in-place TTY line has to be terminated; plain output already is.
+		if (this.isTTY) process.stderr.write(`\n`);
 	}
 }
