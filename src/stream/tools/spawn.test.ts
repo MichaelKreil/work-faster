@@ -34,6 +34,22 @@ describe('spawn', () => {
 		);
 	});
 
+	it('should keep only the tail of a large stderr stream', async () => {
+		// 4 MB of stderr from a failing child. Buffering it whole is what a
+		// looping process would use to exhaust memory; only the tail is useful.
+		const script = 'yes "0123456789abcdefghijklmnopqrstuvwxyz" | head -c 4000000 1>&2; echo LASTLINE 1>&2; exit 4';
+
+		const error = await toString(fromValue('').pipe(spawn('sh', ['-c', script]))).catch((e: Error) => e);
+
+		expect(error).toBeInstanceOf(Error);
+		const { message } = error as Error;
+		expect(message).toMatch(/Process exited with code 4/);
+		// The end of stderr survives, the bulk does not, and it says so.
+		expect(message).toContain('LASTLINE');
+		expect(message).toContain('[stderr truncated]');
+		expect(message.length).toBeLessThan(16 * 1024);
+	});
+
 	it('should complete cleanly when the child closes stdin early (EPIPE)', async () => {
 		// `head -c 1` reads one byte and exits, leaving us writing into a
 		// closed stdin. The transform should swallow the resulting EPIPE

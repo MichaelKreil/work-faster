@@ -2,6 +2,12 @@ import child_process from 'node:child_process';
 import { Transform } from 'node:stream';
 import { WFTransform } from '../classes.js';
 
+// The child's stderr is only ever used to annotate an error message, so there
+// is no reason to hold all of it. A chatty or looping child can emit gigabytes
+// before it exits, which would otherwise be buffered in full. Keep the tail:
+// for a failing process the last output is the part that explains the failure.
+const MAX_STDERR_BYTES = 8 * 1024;
+
 export function spawn(command: string, args: string[]): WFTransform<Buffer | string, Buffer> {
 	const cp = child_process.spawn(command, args, {
 		stdio: ['pipe', 'pipe', 'pipe'],
@@ -11,6 +17,8 @@ export function spawn(command: string, args: string[]): WFTransform<Buffer | str
 	let exited = false;
 	let stdinClosed = false;
 	const stderrChunks: Buffer[] = [];
+	let stderrBytes = 0;
+	let stderrTruncated = false;
 	let onClose: (() => void) | null = null;
 
 	const setError = (err: Error) => {
@@ -66,6 +74,16 @@ export function spawn(command: string, args: string[]): WFTransform<Buffer | str
 
 	cp.stderr.on('data', (data: Buffer) => {
 		stderrChunks.push(data);
+		stderrBytes += data.length;
+		if (stderrBytes > MAX_STDERR_BYTES) {
+			// Collapse to the trailing window. Bounded at MAX_STDERR_BYTES plus
+			// whatever the latest chunk added, however long the child runs.
+			const tail = Buffer.concat(stderrChunks).subarray(-MAX_STDERR_BYTES);
+			stderrChunks.length = 0;
+			stderrChunks.push(tail);
+			stderrBytes = tail.length;
+			stderrTruncated = true;
+		}
 	});
 
 	cp.stdin.on('error', (err) => {
@@ -91,7 +109,7 @@ export function spawn(command: string, args: string[]): WFTransform<Buffer | str
 	cp.on('close', (code, signal) => {
 		exited = true;
 		const stderrText = Buffer.concat(stderrChunks).toString().trim();
-		const detail = stderrText ? `: ${stderrText}` : '';
+		const detail = stderrText ? `: ${stderrTruncated ? '[stderr truncated] ' : ''}${stderrText}` : '';
 		if (signal !== null) {
 			// code is null when the child was terminated by a signal; treating
 			// that as a successful exit silently swallows kill/SIGTERM/etc.
