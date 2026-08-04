@@ -33,6 +33,14 @@ describe('split', () => {
 		expect(results).toEqual(['line1', 'line2', 'line3']);
 	});
 
+	it('should append a truncated trailing multi-byte char to the last line', async () => {
+		// Input ends mid-character: 'a\nb' followed by the first 2 bytes of '€'.
+		// The replacement char belongs to the final line, not to a line of its own.
+		const input = fromValue(Buffer.concat([Buffer.from('a\nb'), Buffer.from([0xe2, 0x82])]));
+		const results = await toArray(input.pipe(split(/\n/)));
+		expect(results).toEqual(['a', 'b�']);
+	});
+
 	it('should error when a line exceeds maxLineSize on the slow path', async () => {
 		// Regex delimiter forces splitSlow; large delimiter-free chunk trips the cap.
 		const big = Buffer.alloc(2 * 1024 * 1024, 0x41);
@@ -97,6 +105,15 @@ describe('splitLines', () => {
 		const big = Buffer.alloc(32 * 1024 * 1024, 0x41);
 		const input = fromValue(big);
 		await expect(toArray(input.pipe(splitFast(10, 'utf8', 1024 * 1024)))).rejects.toThrow(/exceeded max size/);
+	});
+
+	it('should append a truncated trailing multi-byte char to the last line', async () => {
+		// Input ends mid-character: 'a\nb' followed by the first 2 bytes of '€'.
+		// Previously the decoder tail was pushed separately, emitting a third
+		// bogus line containing only the replacement char.
+		const input = fromValue(Buffer.concat([Buffer.from('a\nb'), Buffer.from([0xe2, 0x82])]));
+		const results = await toArray(input.pipe(splitFast()));
+		expect(results).toEqual(['a', 'b�']);
 	});
 
 	it('should preserve UTF-8 multi-byte chars when chunks split mid-character', async () => {

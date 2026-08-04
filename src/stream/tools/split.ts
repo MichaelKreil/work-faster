@@ -50,6 +50,9 @@ function splitSlow(
 				cb();
 			},
 			flush: function (cb: () => void) {
+				// Flush the decoder so a truncated trailing multi-byte sequence is
+				// appended to the final line instead of being silently dropped.
+				last += decoder.end();
 				if (last.length > 0) this.push(last);
 				cb();
 			},
@@ -110,9 +113,11 @@ export function splitFast(
 				if (bufferChunks.length > 0 || lastChunk.length > 0) {
 					processBuffer(this.push.bind(this));
 				}
-				// Flush the decoder so any trailing partial sequence is finalized.
-				if (lastChunk.length > 0) this.push(decoder.write(lastChunk));
-				const tail = decoder.end();
+				// Fold the trailing bytes and whatever incomplete multi-byte sequence
+				// the decoder still holds into a single final line. Pushing
+				// `decoder.end()` separately would emit a truncated character as a
+				// spurious extra line of its own.
+				const tail = decoder.write(lastChunk) + decoder.end();
 				if (tail.length > 0) this.push(tail);
 				callback();
 			},
