@@ -9,6 +9,11 @@ import { forEachAsync } from './for_each_async.js';
  *   which is appropriate for CPU-bound work; for I/O-bound work pass an explicit
  *   value matched to the remote service's capacity (see `forEachAsync`).
  * @returns Array of mapped results in the same order as input items
+ *
+ * @remarks
+ * Shares `forEachAsync`'s failure behaviour: on rejection, callbacks already in
+ * flight are neither cancelled nor awaited, and they keep writing their results
+ * into the (now discarded) result array in the background. See `forEachAsync`.
  */
 export async function mapAsync<I, O>(
 	items: Iterable<I> | AsyncIterable<I> | Iterator<I> | AsyncIterator<I> | IterableIterator<I>,

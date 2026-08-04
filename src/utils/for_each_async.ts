@@ -12,6 +12,21 @@ import os from 'node:os';
  *   Pass an explicit value (e.g. 32 or 100) in those cases.** Must be a positive
  *   integer when provided; `0` or a negative value rejects rather than silently
  *   processing nothing.
+ *
+ * @remarks
+ * **On failure, callbacks already running are not cancelled or awaited.** When a
+ * callback rejects, the returned promise rejects with that first error and no
+ * further items are pulled from `items`, but callbacks that had already started
+ * keep running to completion in the background. Two consequences:
+ *
+ * - Work continues after `await forEachAsync(...)` has thrown. If the callbacks
+ *   touch a resource the caller tears down in a `catch`/`finally` - a database
+ *   handle, a temporary directory, an open stream - that teardown can race them.
+ *   Have the callback check a flag you own, or await a barrier of your own, if
+ *   you need those callbacks to have settled.
+ * - Errors thrown by those still-running callbacks are discarded. Only the first
+ *   error is reported; later ones are neither rethrown nor surfaced as unhandled
+ *   rejections.
  */
 export function forEachAsync<I>(
 	items: Iterable<I> | AsyncIterable<I> | Iterator<I> | AsyncIterator<I> | IterableIterator<I>,

@@ -196,6 +196,80 @@ describe('forEachAsync', () => {
 		expect(seen.sort()).toEqual([0, 1, 2, 3, 4]);
 	});
 
+	describe('after a callback rejects', () => {
+		it('should stop pulling new items', async () => {
+			const started: number[] = [];
+
+			await expect(
+				forEachAsync(
+					[1, 2, 3, 4, 5, 6],
+					async (item) => {
+						started.push(item);
+						if (item === 1) throw new Error('stop');
+					},
+					2,
+				),
+			).rejects.toThrow('stop');
+			await randomWait(30);
+
+			expect(started).not.toContain(6);
+		});
+
+		it('should leave callbacks that already started running to completion', async () => {
+			// Documented behaviour, not an aspiration: nothing cancels or awaits
+			// them, so a caller tearing down resources in a catch block races them.
+			const finishedItems: number[] = [];
+
+			await expect(
+				forEachAsync(
+					[1, 2],
+					async (item) => {
+						// Item 1 must fail only once item 2 is genuinely in flight;
+						// failing synchronously would stop item 2 from ever starting.
+						await new Promise((r) => setTimeout(r, 10));
+						if (item === 1) throw new Error('fails first');
+						await new Promise((r) => setTimeout(r, 40));
+						finishedItems.push(item);
+					},
+					2,
+				),
+			).rejects.toThrow('fails first');
+
+			expect(finishedItems).toEqual([]);
+			await new Promise((r) => setTimeout(r, 100));
+			expect(finishedItems).toEqual([2]);
+		});
+
+		it('should discard errors from callbacks still in flight', async () => {
+			const unhandled = vi.fn();
+			const secondThrew = vi.fn();
+			process.on('unhandledRejection', unhandled);
+			try {
+				await expect(
+					forEachAsync(
+						[1, 2],
+						async (item) => {
+							await new Promise((r) => setTimeout(r, 10));
+							if (item === 1) throw new Error('first');
+							await new Promise((r) => setTimeout(r, 40));
+							secondThrew();
+							throw new Error('second');
+						},
+						2,
+					),
+				).rejects.toThrow('first');
+
+				await new Promise((r) => setTimeout(r, 100));
+				// The second callback did reach its throw, and that error went
+				// nowhere: neither rethrown nor reported as an unhandled rejection.
+				expect(secondThrew).toHaveBeenCalled();
+				expect(unhandled).not.toHaveBeenCalled();
+			} finally {
+				process.off('unhandledRejection', unhandled);
+			}
+		});
+	});
+
 	it('should handle errors from an asynchronous generator', async () => {
 		async function* asyncErrorGenerator() {
 			yield 1;
