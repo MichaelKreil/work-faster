@@ -1,4 +1,5 @@
 import { PassThrough } from 'node:stream';
+import zlib from 'node:zlib';
 import { createBrotliDecompress, createGunzip, createGzip, createBrotliCompress, constants } from 'node:zlib';
 import { spawn } from './spawn.js';
 import type { Compression } from '../types.js';
@@ -23,6 +24,11 @@ export interface CompressOptions {
 	level?: number;
 }
 
+// Node gained native zstd support in 22.15 / 23.8, but this package supports
+// Node >= 22.0, so the `zstd` CLI stays as a fallback for the versions that
+// predate it. The two produce interchangeable frames.
+const hasNativeZstd = typeof zlib.createZstdCompress === 'function' && typeof zlib.createZstdDecompress === 'function';
+
 const LEVEL_RANGES: Record<Exclude<Compression, 'none'>, [number, number]> = {
 	gzip: [0, 9],
 	brotli: [0, 11],
@@ -45,7 +51,7 @@ function checkLevel(type: Exclude<Compression, 'none'>, level: number | undefine
  * - `'gzip'`: Gzip compression
  * - `'brotli'`: Brotli compression
  * - `'lz4'`: LZ4 compression (requires `lz4` CLI)
- * - `'zstd'`: Zstandard compression (requires `zstd` CLI)
+ * - `'zstd'`: Zstandard compression (native on Node >= 22.15, otherwise requires the `zstd` CLI)
  * - `'none'`: No compression (pass-through)
  *
  * @returns A `WFTransform` stream that decompresses the input data into raw data.
@@ -64,7 +70,7 @@ export function decompress(type: Compression): WFTransform<Buffer | string, Buff
 		case 'lz4':
 			return spawn('lz4', ['-d']);
 		case 'zstd':
-			return spawn('zstd', ['-d']);
+			return hasNativeZstd ? wrapTransform(zlib.createZstdDecompress()) : spawn('zstd', ['-d']);
 		case 'none':
 			return bytePassThrough();
 		default:
@@ -79,7 +85,7 @@ export function decompress(type: Compression): WFTransform<Buffer | string, Buff
  * - `'gzip'`: Gzip compression
  * - `'brotli'`: Brotli compression
  * - `'lz4'`: LZ4 compression (requires `lz4` CLI)
- * - `'zstd'`: Zstandard compression (requires `zstd` CLI)
+ * - `'zstd'`: Zstandard compression (native on Node >= 22.15, otherwise requires the `zstd` CLI)
  * - `'none'`: No compression (pass-through)
  *
  * @param options - Configuration options for compression:
@@ -113,7 +119,13 @@ export function compress(type: Compression, options: CompressOptions = {}): WFTr
 		case 'lz4':
 			return spawn('lz4', ['-' + (level ?? 1)]);
 		case 'zstd':
-			return spawn('zstd', ['-' + (level ?? 3)]);
+			return hasNativeZstd
+				? wrapTransform(
+						zlib.createZstdCompress({
+							params: { [zlib.constants.ZSTD_c_compressionLevel]: level ?? 3 },
+						}),
+					)
+				: spawn('zstd', ['-' + (level ?? 3)]);
 		case 'none':
 			return bytePassThrough();
 		default:

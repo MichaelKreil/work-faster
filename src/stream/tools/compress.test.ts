@@ -1,3 +1,5 @@
+import child_process from 'node:child_process';
+import zlib from 'node:zlib';
 import { compress, decompress } from './compress.js';
 import { Compression } from '../types.js';
 import { fromValue, toBuffer } from './utils.js';
@@ -53,6 +55,37 @@ describe('Compression and Decompression', () => {
 				expect(compressedLevel9.length).toBeLessThan(compressedLevel1.length);
 			});
 		}
+	});
+
+	describe('zstd', () => {
+		// Node gained native zstd in 22.15; below that the CLI fallback is used
+		// and there is no in-process API to compare against.
+		const hasNativeZstd = typeof zlib.createZstdCompress === 'function';
+
+		it.skipIf(!hasNativeZstd)('should not spawn a child process', async () => {
+			const spawnSpy = vi.spyOn(child_process, 'spawn');
+
+			const compressed = await toBuffer(fromValue(buffer).pipe(compress('zstd')));
+			const decompressed = await toBuffer(fromValue(compressed).pipe(decompress('zstd')));
+
+			expect(decompressed).toEqual(buffer);
+			expect(spawnSpy).not.toHaveBeenCalled();
+			spawnSpy.mockRestore();
+		});
+
+		it.skipIf(!hasNativeZstd)('should read frames produced outside this process', async () => {
+			// Guards against the switch to the native API breaking existing files.
+			const external = zlib.zstdCompressSync(buffer);
+			const decompressed = await toBuffer(fromValue(external).pipe(decompress('zstd')));
+
+			expect(decompressed).toEqual(buffer);
+		});
+
+		it.skipIf(!hasNativeZstd)('should produce frames readable outside this process', async () => {
+			const compressed = await toBuffer(fromValue(buffer).pipe(compress('zstd', { level: 7 })));
+
+			expect(zlib.zstdDecompressSync(compressed)).toEqual(buffer);
+		});
 	});
 
 	it('should handle "none" compression by returning the original buffer', async () => {
