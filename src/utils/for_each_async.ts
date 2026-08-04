@@ -5,8 +5,8 @@ import os from 'node:os';
  *
  * @param items - The items to iterate over (array, iterable, or async iterable)
  * @param callback - Async function called for each item with the item and its index
- * @param maxParallel - Maximum concurrent operations. Defaults to `os.cpus().length`,
- *   which is appropriate for CPU-bound work. **For I/O-bound work (HTTP requests,
+ * @param maxParallel - Maximum concurrent operations. Defaults to `os.cpus().length`
+ *   (never less than 1), which is appropriate for CPU-bound work. **For I/O-bound work (HTTP requests,
  *   disk reads, database queries) the CPU count is the wrong axis - the optimal
  *   parallelism is dictated by the remote service's capacity, not local cores.
  *   Pass an explicit value (e.g. 32 or 100) in those cases.** Must be a positive
@@ -21,7 +21,11 @@ export function forEachAsync<I>(
 	if (maxParallel !== undefined && (!Number.isInteger(maxParallel) || maxParallel < 1)) {
 		return Promise.reject(new RangeError(`maxParallel must be a positive integer, got ${maxParallel}`));
 	}
-	const concurrency = maxParallel ?? os.cpus().length;
+	// os.cpus() is documented to return an empty array on some platforms and in
+	// restricted containers. Falling through with a concurrency of 0 would spawn
+	// no workers at all and resolve successfully without processing anything, so
+	// clamp to at least 1.
+	const concurrency = maxParallel ?? Math.max(1, os.cpus().length);
 	const iterator = getIterator(items);
 	let index = 0;
 	let finished = false;

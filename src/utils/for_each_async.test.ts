@@ -1,6 +1,22 @@
+import os from 'node:os';
 import { forEachAsync } from './for_each_async.js';
 
 describe('forEachAsync', () => {
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
+	it('should still process every item when os.cpus() reports no CPUs', async () => {
+		// os.cpus() may return an empty array in restricted containers. A
+		// concurrency of 0 would resolve without processing anything at all.
+		vi.spyOn(os, 'cpus').mockReturnValue([]);
+		const seen: number[] = [];
+
+		await forEachAsync([1, 2, 3], async (item) => void seen.push(item));
+
+		expect(seen).toEqual([1, 2, 3]);
+	});
+
 	it('should call the callback for each item in the list', async () => {
 		const list = [1, 2, 3, 4];
 		const callback = vi.fn(async () => {});
