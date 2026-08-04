@@ -164,9 +164,9 @@ export class WFWritable<I = unknown> {
 	 * transform into a destination, `inner` is the transform and `tail` is the
 	 * destination; `end()` then has to wait for the destination too, since
 	 * `inner` finishing only means the transform accepted the data, not that
-	 * the destination has processed it.
+	 * the destination has processed it. Equal to `inner` for a plain writable.
 	 */
-	private readonly tail: Writable;
+	readonly tail: Writable;
 	private tailError: Error | undefined;
 
 	constructor(inner: Writable, tail: Writable = inner) {

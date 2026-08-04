@@ -1,6 +1,11 @@
+import { createWriteStream, readFileSync, unlinkSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { Readable, Transform, Writable } from 'node:stream';
+import { merge } from './merge.js';
 import { pipeline } from './pipeline.js';
-import { wrapWrite } from './wrapper.js';
+import { fromArray } from './utils.js';
+import { wrapTransform, wrapWrite } from './wrapper.js';
 
 describe('pipeline', () => {
 	it('should handle a pipeline with readable, transform, and writable streams', async () => {
@@ -70,6 +75,34 @@ describe('pipeline', () => {
 		await pipeline(asyncGenerator(), (chunk) => chunk.toString().toUpperCase(), writable);
 
 		expect(output).toEqual(['ASYNC1', 'ASYNC2', 'ASYNC3']);
+	});
+
+	it('should not resolve before the destination is closed', async () => {
+		// 'finish' only means the last write was handed off; a file descriptor is
+		// released on 'close'. Resolving early lets callers race that release.
+		const file = join(tmpdir(), `wf-pipeline-close-${process.pid}.txt`);
+		const target = createWriteStream(file);
+
+		await pipeline(['a\n', 'b\n'], target);
+
+		expect(target.closed).toBe(true);
+		expect(readFileSync(file, 'utf8')).toBe('a\nb\n');
+		unlinkSync(file);
+	});
+
+	it('should not resolve before a merged destination has consumed everything', async () => {
+		// The merged writable's `inner` is only the head transform; finishing it
+		// says nothing about the stream that actually consumes the data.
+		const received: string[] = [];
+		const transform = wrapTransform((n: number) => (n + 10).toFixed());
+		const slowWritable = wrapWrite(async (item: string) => {
+			await new Promise((r) => setTimeout(r, 20));
+			received.push(item);
+		});
+
+		await pipeline(fromArray([1, 2, 3]), merge(transform, slowWritable));
+
+		expect(received).toEqual(['11', '12', '13']);
 	});
 
 	it('should destroy surviving stages when one fails', async () => {

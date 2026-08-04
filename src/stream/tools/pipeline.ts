@@ -1,3 +1,4 @@
+import { finished } from 'node:stream/promises';
 import { WFReadable, WFTransform } from '../classes.js';
 import type { WFReadSource as R, WFTransformSource as T, WFWriteSource as W } from './wrapper.js';
 import { wrapRead, wrapTransform, wrapWrite } from './wrapper.js';
@@ -69,7 +70,11 @@ export function pipeline(r: R, ...w: (T | W)[]): Promise<void> {
 	}
 	stream.pipe(write);
 
+	// `write.tail` differs from `write.inner` when the destination is a merged
+	// chain: `inner` is then only the head of that chain and finishing it says
+	// nothing about the stream that actually consumes the data.
 	const allStages = [read.inner, ...transforms.map((t) => t.inner), write.inner];
+	if (write.tail !== write.inner) allStages.push(write.tail);
 
 	return new Promise((resolve, reject) => {
 		let settled = false;
@@ -96,6 +101,12 @@ export function pipeline(r: R, ...w: (T | W)[]): Promise<void> {
 		// Attach an error listener to every stage so a failure mid-pipeline
 		// rejects instead of hanging on the writable's never-fired 'finish'.
 		for (const stage of allStages) stage.on('error', fail);
-		write.inner.on('finish', done);
+
+		// Wait for the destination to be fully closed rather than merely
+		// finished: 'finish' fires once the last write has been handed off, but
+		// a file descriptor or socket is only released on 'close'. Resolving on
+		// 'finish' lets a caller race that release - reading, renaming or
+		// unlinking the output before it is actually done.
+		finished(write.tail).then(done, fail);
 	});
 }
