@@ -92,6 +92,89 @@ describe('read', () => {
 		await expect(read('https://example.com/missing')).rejects.toThrow('HTTP 404 for https://example.com/missing');
 	});
 
+	it('should follow a redirect to an absolute location', async () => {
+		const target = mockResponse('redirected content', { 'content-length': '18' }, 200);
+		httpsRequest.mockImplementation((url, cb) => {
+			cb(
+				url === 'https://example.com/start' ? mockResponse('', { location: 'https://example.com/final' }, 302) : target,
+			);
+			return mockRequest();
+		});
+
+		const { stream, size } = await read('https://example.com/start');
+
+		expect(httpsRequest).toHaveBeenCalledTimes(2);
+		expect(httpsRequest).toHaveBeenLastCalledWith('https://example.com/final', expect.any(Function));
+		expect(size).toBe(18);
+		expect(await toString(stream)).toBe('redirected content');
+	});
+
+	it('should resolve a relative location against the redirecting URL', async () => {
+		httpsRequest.mockImplementation((url, cb) => {
+			cb(
+				url === 'https://example.com/dir/start'
+					? mockResponse('', { location: 'other' }, 301)
+					: mockResponse('ok', {}, 200),
+			);
+			return mockRequest();
+		});
+
+		await read('https://example.com/dir/start');
+
+		expect(httpsRequest).toHaveBeenLastCalledWith('https://example.com/dir/other', expect.any(Function));
+	});
+
+	it('should follow a redirect that switches protocol', async () => {
+		httpsRequest.mockImplementation((_, cb) => {
+			cb(mockResponse('', { location: 'http://example.com/plain' }, 302));
+			return mockRequest();
+		});
+		httpRequest.mockImplementation((_url, cb) => {
+			cb(mockResponse('plain content', {}, 200));
+			return mockRequest();
+		});
+
+		const { stream } = await read('https://example.com/secure');
+
+		expect(httpRequest).toHaveBeenCalledWith('http://example.com/plain', expect.any(Function));
+		expect(await toString(stream)).toBe('plain content');
+	});
+
+	it('should reject a redirect loop once maxRedirects is exceeded', async () => {
+		httpsRequest.mockImplementation((_, cb) => {
+			cb(mockResponse('', { location: 'https://example.com/loop' }, 302));
+			return mockRequest();
+		});
+
+		await expect(read('https://example.com/loop', { maxRedirects: 2 })).rejects.toThrow(
+			'Too many redirects (more than 2) for https://example.com/loop',
+		);
+		// The initial request plus the two permitted hops.
+		expect(httpsRequest).toHaveBeenCalledTimes(3);
+	});
+
+	it('should reject a redirect without a location header', async () => {
+		httpsRequest.mockImplementation((_, cb) => {
+			cb(mockResponse('', {}, 302));
+			return mockRequest();
+		});
+
+		await expect(read('https://example.com/nowhere')).rejects.toThrow(
+			'HTTP 302 without a location header for https://example.com/nowhere',
+		);
+	});
+
+	it('should reject a redirect to an unsupported protocol', async () => {
+		httpsRequest.mockImplementation((_, cb) => {
+			cb(mockResponse('', { location: 'ftp://example.com/file' }, 302));
+			return mockRequest();
+		});
+
+		await expect(read('https://example.com/start')).rejects.toThrow(
+			'Unsupported redirect target ftp://example.com/file',
+		);
+	});
+
 	it('should reject when the underlying request emits an error', async () => {
 		httpsRequest.mockImplementation(() => {
 			const req = mockRequest();
