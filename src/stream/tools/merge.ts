@@ -24,10 +24,12 @@ export function merge<A, B, C>(
 		return new WFReadable(a.inner.pipe(b.inner));
 	}
 
-	// Case 2: Merging a WFTransform with a WFWritable to produce a WFWritable
+	// Case 2: Merging a WFTransform with a WFWritable to produce a WFWritable.
+	// The destination is passed as the tail so that end() waits for it to finish
+	// rather than resolving as soon as the transform has taken the last chunk.
 	if (a instanceof WFTransform && b instanceof WFWritable) {
 		a.inner.pipe(b.inner);
-		return new WFWritable(a.inner);
+		return new WFWritable(a.inner, b.inner);
 	}
 
 	// Case 3: Merging two WFTransforms to produce a WFTransform

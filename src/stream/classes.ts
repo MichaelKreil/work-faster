@@ -1,4 +1,5 @@
 import { Duplex, Readable, Transform, Writable } from 'node:stream';
+import { finished } from 'node:stream/promises';
 import { merge } from './tools/merge.js';
 
 /**
@@ -158,9 +159,28 @@ export class WFTransform<I = unknown, O = I> {
 export class WFWritable<I = unknown> {
 	readonly type = 'Writable';
 	inner: Writable;
+	/**
+	 * The final stream of the chain this writable heads. When `merge` pipes a
+	 * transform into a destination, `inner` is the transform and `tail` is the
+	 * destination; `end()` then has to wait for the destination too, since
+	 * `inner` finishing only means the transform accepted the data, not that
+	 * the destination has processed it.
+	 */
+	private readonly tail: Writable;
+	private tailError: Error | undefined;
 
-	constructor(inner: Writable) {
+	constructor(inner: Writable, tail: Writable = inner) {
 		this.inner = inner;
+		this.tail = tail;
+		if (tail !== inner) {
+			// `pipe` does not forward a destination's error to its source, and
+			// nothing else is listening on the destination, so an 'error' there
+			// would be an unhandled event and take down the process. Capture it
+			// and report it from end() instead.
+			tail.on('error', (err: Error) => {
+				this.tailError ??= err;
+			});
+		}
 	}
 
 	// Write method that respects backpressure and rejects on stream errors
@@ -168,8 +188,16 @@ export class WFWritable<I = unknown> {
 		return writeToInner(this.inner, content);
 	}
 
-	// End method that finalizes the stream
-	end(): Promise<void> {
-		return endInner(this.inner);
+	// End method that finalizes the stream and every stage downstream of it
+	async end(): Promise<void> {
+		try {
+			await endInner(this.inner);
+		} catch (err) {
+			throw this.tailError ?? err;
+		}
+		if (this.tail !== this.inner) {
+			if (this.tailError) throw this.tailError;
+			await finished(this.tail);
+		}
 	}
 }
