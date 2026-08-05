@@ -75,6 +75,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (not RFC 4180) and does not support quoted fields, escaped quotes, or
   separators/newlines embedded in values.
 
+## [2.7.0] - 2026-08-05
+
+### Features
+
+- enhance forEachAsync to handle empty CPU reports and ensure minimum concurrency ([a8feb0c](https://github.com/MichaelKreil/work-faster/commit/a8feb0c0adc6b51574e8ef2ef3deb31f9c30e187))
+- append truncated trailing multi-byte char to the last line in split and splitFast functions ([3602ef3](https://github.com/MichaelKreil/work-faster/commit/3602ef3dc59a8872b5923b2986d7c73eb4fc4c9a))
+- enhance WFWritable to handle tail streams and propagate errors correctly ([4ac4eee](https://github.com/MichaelKreil/work-faster/commit/4ac4eee642014972443c54cb71b4c961e6c3af42))
+- enhance pipeline to ensure destination closure before resolving and update WFWritable tail property visibility ([643d71d](https://github.com/MichaelKreil/work-faster/commit/643d71d9b0a5c5780132d09a4142484878f29431))
+- implement redirect handling in read function with maxRedirects option ([ab23d2e](https://github.com/MichaelKreil/work-faster/commit/ab23d2ea3e8e407373ce43d56f9c35b8915effbb))
+- enhance ProgressBar to handle non-TTY output and improve logging behavior ([806bef0](https://github.com/MichaelKreil/work-faster/commit/806bef0bd5d96866a748220d21123f1e8a39f4e6))
+- add native zstd support and fallback for older Node versions in compression functions ([bab65ee](https://github.com/MichaelKreil/work-faster/commit/bab65ee23ec4ab28dee49ce8e47d1bdc4b732201))
+- implement stderr tailing for long output in spawn function ([846f352](https://github.com/MichaelKreil/work-faster/commit/846f35268da6e9fa29f1492565964009addd0a3b))
+- add tests for forEachAsync rejection behavior and update documentation on callback handling ([3a22140](https://github.com/MichaelKreil/work-faster/commit/3a221404a09d41dfef9974c4fcb066040969d97a))
+- update formatting check command in CI and package.json scripts ([02813f0](https://github.com/MichaelKreil/work-faster/commit/02813f0121772d383d77208789b41d68d4ee5bd9))
+- add MIT License file to the repository ([6cf86a3](https://github.com/MichaelKreil/work-faster/commit/6cf86a3022a18aec71cb567db3a1e3efff916a0a))
+- simplify ESLint configuration by removing unused globals and project settings ([66ea9ac](https://github.com/MichaelKreil/work-faster/commit/66ea9ace882cbb5bc408d3166237a3ea4f7a77ee))
+- update tsconfig.build.json to include types for node and improve build error handling ([1252367](https://github.com/MichaelKreil/work-faster/commit/1252367c667c9dc28a2bf5043fd8e94af4201a4b))
+- update README.md to include mapAsync function and enhance ProgressBar documentation ([5ad2904](https://github.com/MichaelKreil/work-faster/commit/5ad2904ae4577ffc20af5e81eae00f200a958375))
+
+### Build System
+
+- **deps:** bump actions/setup-node in the github-action group ([676f1df](https://github.com/MichaelKreil/work-faster/commit/676f1dfa26e0d5e7ece3f2cde1cb429d38a38261))
+
+### Chores
+
+- update devDependencies and package settings ([b704565](https://github.com/MichaelKreil/work-faster/commit/b70456523178c01d23dfc9992f8b3dd7cdc587fb))
+
 ## [2.6.0] - 2026-07-08
 
 ### Breaking Changes
