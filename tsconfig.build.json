@@ -3,7 +3,12 @@
 	"compilerOptions": {
 		"outDir": "dist",
 		"noEmit": false,
-		"sourceMap": false
+		"sourceMap": false,
+		// Narrowed from the base config's ["node", "vitest/globals"]. The shipped
+		// build has no business depending on the test runner's ambient types, and
+		// an unresolvable entry here is a hard error (TS2688), so leaving it in
+		// makes `npm run build` - and therefore `prepack` - fail without vitest.
+		"types": ["node"]
 	},
 	"include": ["src/**/*.ts"],
 	"exclude": ["src/**/*.test.ts"]
