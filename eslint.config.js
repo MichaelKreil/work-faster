@@ -14,16 +14,15 @@ export default [
 		languageOptions: {
 			ecmaVersion: 'latest',
 			sourceType: 'module',
-			globals: {
-				browser: false,
-				es6: true,
-				node: true,
-			},
 			parser,
+			// No `project` here on purpose. Type-aware parsing roughly doubles lint
+			// time, and none of the enabled rules consult type information -
+			// typescript-eslint's recommended set is entirely syntactic, and
+			// `no-undef` is off because tsc already reports unknown identifiers.
+			// Add `project: './tsconfig.json'` back alongside
+			// `ts.configs.recommendedTypeChecked` if typed rules are ever wanted.
 			parserOptions: {
 				sourceType: 'module',
-				project: './tsconfig.json',
-				tsconfigRootDir: import.meta.dirname,
 			},
 		},
 		plugins: {
