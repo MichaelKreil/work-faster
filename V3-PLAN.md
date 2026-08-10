@@ -56,6 +56,9 @@ assumptions we started with:
 - **`highWaterMark` tuning changed nothing** for object streams (136 ms at both
   16 and 1024), so stream overhead is per-chunk machinery, not buffering policy.
 
+A third generator variant — sync generators, and using them to compose stages
+lazily inside a batch — was measured and rejected; see §2.7.
+
 ### 2.2 Never `await` a non-promise
 
 Single map stage, 200,000 items:
@@ -151,6 +154,42 @@ It found three design bugs that would otherwise have shipped:
 3. **`concat` bound its type parameter to the first argument** and rejected the
    rest instead of producing a union.
 
+### 2.7 Rejected alternative: sync generators inside a batch
+
+Sync generators are far cheaper than async ones, which raises an obvious
+question: since each batched stage allocates a fresh output array, why not
+compose the stages **lazily** with sync generators inside a batch, walk it once
+and allocate nothing?
+
+1,000,000 items, three stages:
+
+| variant                                  |   median | items/sec |
+| ---------------------------------------- | -------: | --------: |
+| plain `for` loop (floor)                 |   2.3 ms |    443M/s |
+| **batched 256 + manual loops** (chosen)  |  14.7 ms | **68M/s** |
+| batched 256 + `Array.map`/`filter`       |  18.9 ms |     53M/s |
+| batched 256 + sync-generator composition |  46.7 ms |     21M/s |
+| sync generators, per item                |  54.7 ms |     18M/s |
+| async generators, per item               | 290.2 ms |    3.4M/s |
+
+Sync generators are **~5.3× faster than async** (18.3M vs 3.4M/s) — no promise
+allocation, no microtask tick. Working back from the numbers, a sync `yield`
+costs ~17 ns against ~96 ns for an async one.
+
+But they are still **~24× slower than a plain loop**. A sync `yield` drives a
+generator state machine and allocates a `{value, done}` object per element. The
+real cost is therefore **per-element iterator protocol overhead**, whether sync
+or async; async merely multiplies it.
+
+So the lazy-composition idea loses: **46.7 ms vs 14.7 ms, 3.2× slower**. Avoiding
+the intermediate arrays does not pay, because 3M sync yields (~51 ms) cost far
+more than V8 spends allocating small, short-lived arrays. Even idiomatic
+`Array.map`/`filter` loses to manual loops by 29%.
+
+**Rule: generators for coarse transport, plain loops for fine iteration.** Sync
+generators have no role in the hot path — they cannot `await`, so they cannot be
+the transport, and they are slower than plain loops for the inner iteration.
+
 ---
 
 ## 3. Architecture
@@ -172,6 +211,8 @@ Both overridable per stage.
 Invariants every stage must uphold:
 
 - Guard the await (`instanceof Promise`) — §2.2.
+- Generators carry batches; **inside** a batch use a plain indexed `for` loop,
+  never a generator or `Array.map`/`filter` — §2.7.
 - Flush a partial batch on early termination (`take`, `break`, error).
 - `unref()` the flush timer so it never holds the process open.
 
