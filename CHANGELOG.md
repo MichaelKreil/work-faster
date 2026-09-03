@@ -75,6 +75,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (not RFC 4180) and does not support quoted fields, escaped quotes, or
   separators/newlines embedded in values.
 
+## [2.7.1] - 2026-09-03
+
+### Chores
+
+- update devDependencies to latest versions ([a845ba6](https://github.com/MichaelKreil/work-faster/commit/a845ba635bd0f52d050da7e3ced6914f81573afe))
+
 ## [2.7.0] - 2026-08-05
 
 ### Features
